@@ -6,15 +6,12 @@
 
 #include "spatial_visual_system/sofa_annotation.h"
 
-#include <rapidjson/rapidjson.h>
-#include <rapidjson/document.h>
+#include <nlohmann/json.hpp>
 
 namespace svs {
 class SofA {
 public:
-  SofA() {
-      annotations_.SetObject();
-  }
+  SofA() = default;
 
   ~SofA() = default;
   // copy
@@ -31,9 +28,9 @@ public:
     *this = std::move(sofa);
   }
 
-  //std::mutex lock_;
+  std::mutex lock_;
   //std::vector<SofAAnnotation*> annotations_;
-  rapidjson::Document annotations_;
+  nlohmann::json annotations_;
 };
 
 } // namespace svs

@@ -4,12 +4,14 @@
 #include <vector>
 #include <mutex>
 
-#include <spatial_visual_system/sofa.h>
+#include "spatial_visual_system/sofa.h"
+#include "spatial_visual_system/scene_writer.h"
 
 namespace svs {
 class Scene {
 public:
-  SofA& addSofA() {auto ret = sofa_.emplace({}); return *ret;}
+  SofA& addSofA() {sofa_.push_back(SofA{}); return sofa_.back();}
+  void accept(SceneWriter& writer);
   std::mutex lock_;
 
 private:

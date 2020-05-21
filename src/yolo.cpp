@@ -1,11 +1,11 @@
 #include "spatial_visual_system/yolo.h"
 #include "spatial_visual_system/ros_utils.h"
 
+#include<string>
+
 #include <ros/ros.h>
 
-#include <rapidjson/rapidjson.h>
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
+#include <nlohmann/json.hpp>
 
 namespace svs {
 YoloGenerator::YoloGenerator(ros::NodeHandle& nh) :
@@ -21,6 +21,8 @@ YoloGenerator::YoloGenerator(ros::NodeHandle& nh) :
     frameRate.request.person    = 0;
     frameRate.request.object    = 5;
     frameRate.request.furniture = 0;
+    ROS_INFO("Waiting for service %s", set_frame_rate_service_name_.c_str());
+    frame_rate_service_.waitForExistence();
     if (!frame_rate_service_.call(frameRate)) {
         ROS_ERROR("Failed to set vision frame rate!");
     }
@@ -31,7 +33,7 @@ YoloGenerator::YoloGenerator(ros::NodeHandle& nh) :
 void YoloGenerator::read_params() {
     get_ros_param(nh_, "yolo_results_topic", yolo_service_name_);
     get_ros_param(nh_, "set_frame_rate_service", set_frame_rate_service_name_);
-    // get_ros_param(nh_, "yolo_debug", debug_, false);
+    get_ros_param(nh_, "yolo_debug", debug_, false);
 }
 
 void YoloGenerator::run(Scene& scene) {
@@ -46,35 +48,39 @@ void YoloGenerator::run(Scene& scene) {
     // Process the detections
 
     for (unsw_vision_msgs::Detection o : lookup_detections) {
-        SofA* new_sofa = nullptr;
+        SofA *new_sofa = nullptr;
         // Create a new SofA
         {
         std::lock_guard<std::mutex> scene_lock{scene.lock_};
         new_sofa = &scene.addSofA();
         }
         // Lock the new sofa
-        //std::lock_guard<std::mutex> sofa_lock(new_sofa->lock_);
+        std::lock_guard<std::mutex> sofa_lock(new_sofa->lock_);
 
         // Find class
         diagnostic_msgs::KeyValue class_key_val = *std::find_if(o.details.tags.begin(), o.details.tags.end(), 
                 [&] (const diagnostic_msgs::KeyValue& key_val) {return key_val.key == o.details.KEY_CLASS;});
 
+        diagnostic_msgs::KeyValue class_conf_key_val = *std::find_if(o.details.tags.begin(), o.details.tags.end(), 
+                [&] (const diagnostic_msgs::KeyValue& key_val) {return key_val.key == o.details.KEY_CLASS_CONF;});
+
         std::string obj_class = class_key_val.value;
-        rapidjson::Value obj_class_conf{0.0};
+        double obj_class_conf = std::stod(class_conf_key_val.value);
+
+        // Write out class
+        new_sofa->annotations_["class"] = obj_class;
+        new_sofa->annotations_["class_conf"] = obj_class_conf;
+
+        // Write out point
+        new_sofa->annotations_["frame_id"] = o.details.frame_id;
+        new_sofa->annotations_["pose_x"] = o.details.position.x;
+        new_sofa->annotations_["pose_y"] = o.details.position.y;
+        new_sofa->annotations_["pose_z"] = o.details.position.z;
         
-        rapidjson::Value obj_class_json;
-        obj_class_json.SetString(obj_class.c_str(), obj_class.length(), new_sofa->annotations_.GetAllocator());
-        new_sofa->annotations_.AddMember("class", obj_class_json, new_sofa->annotations_.GetAllocator());
-        new_sofa->annotations_.AddMember("class_conf", obj_class_conf, new_sofa->annotations_.GetAllocator());
         
         if (debug_) {
-            ROS_INFO("Dumping out SofA");
-            rapidjson::StringBuffer buffer;
-            rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-            new_sofa->annotations_.Accept(writer);
-            ROS_INFO_STREAM("New YOLO SofA: " << buffer.GetString());
+            ROS_INFO_STREAM("YoloGenerator made new sofa: " << new_sofa->annotations_);
         }
-        
     }
 }
 

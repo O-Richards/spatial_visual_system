@@ -2,14 +2,17 @@ cmake_minimum_required(VERSION 2.8.3)
 project(spatial_visual_system)
 
 ## Using clang for nice prints
-set(CMAKE_CXX_COMPILER "clang++-9")
-set(CMAKE_C_COMPILER "clang-9")
+#set(CMAKE_CXX_COMPILER "/usr/bin/clang++-9")
+#set(CMAKE_C_COMPILER "/usr/bin/clang-9")
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 add_compile_options(-std=c++11)
 add_compile_options(-Wall)
 add_compile_options(-ggdb)
 
+## Include nlohmann_json
+## set(JSON_BuildTests OFF CACHE INTERNAL "")
+## add_subdirectory(nlohmann_json)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -20,6 +23,8 @@ find_package(catkin REQUIRED COMPONENTS
   vision_msgs
   world_model_store_msgs
 )
+
+## find_package(nlohmann_json 3.0.2 REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -126,13 +131,13 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
-  rapidjson/include
 )
 
 ## Declare a C++ library
 add_library(${PROJECT_NAME}
   src/scene.cpp
   src/yolo.cpp
+  src/scene_writer.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -143,7 +148,8 @@ add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EX
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(${PROJECT_NAME}_node src/spatial_visual_system_node.cpp)
+##add_executable(${PROJECT_NAME}_node src/spatial_visual_system_node.cpp)
+add_executable(spatial_visual_system_node src/spatial_visual_system_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -160,6 +166,8 @@ target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
   ${PROJECT_NAME}
 )
+
+add_executable(test src/test.cpp)
 
 #############
 ## Install ##
