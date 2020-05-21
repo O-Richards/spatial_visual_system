@@ -1,0 +1,7 @@
+<launch>
+  <node pkg="spatial_visual_system" type="spatial_visual_system_node" name="svs" output="screen" launch-prefix="valgrind">
+    <param name="yolo_results_topic" type="str" value="/gpu/ObjectServicesNodelet/lookup_objects" />
+    <param name="set_frame_rate_service" type="str" value="/gpu/Republisher/set_frame_rates" />
+  </node>
+
+</launch>
