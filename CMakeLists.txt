@@ -6,13 +6,14 @@ project(spatial_visual_system)
 #set(CMAKE_C_COMPILER "/usr/bin/clang-9")
 
 ## Compile as C++11, supported in ROS Kinetic and newer
-add_compile_options(-std=c++11)
+add_compile_options(-std=c++14)
 add_compile_options(-Wall)
 add_compile_options(-ggdb)
 
 ## Include nlohmann_json
 ## set(JSON_BuildTests OFF CACHE INTERNAL "")
 ## add_subdirectory(nlohmann_json)
+
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
@@ -22,12 +23,24 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   vision_msgs
   world_model_store_msgs
+  pcl_ros
+  cv_bridge
+  sensor_msgs
+  message_filters
+  image_transport
+  compressed_image_transport
+  compressed_depth_image_transport
+  unsw_vision_msgs
+  pcl_conversions
 )
+
+find_package(OpenCV 3 REQUIRED)
+find_package(PCL REQUIRED)
 
 ## find_package(nlohmann_json 3.0.2 REQUIRED)
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -117,9 +130,9 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
  INCLUDE_DIRS include
-#  LIBRARIES spatial_visual_system
-#  CATKIN_DEPENDS roscpp rospy std_msgs vision_msgs world_model_store_msgs
-#  DEPENDS system_lib
+ LIBRARIES spatial_visual_system
+ CATKIN_DEPENDS roscpp rospy std_msgs vision_msgs world_model_store_msgs pcl_ros cv_bridge unsw_vision_msgs
+ DEPENDS system_lib
 )
 
 ###########
@@ -131,6 +144,7 @@ catkin_package(
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
@@ -138,12 +152,19 @@ add_library(${PROJECT_NAME}
   src/scene.cpp
   src/yolo.cpp
   src/scene_writer.cpp
+  src/scene_manager.cpp
 )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+  ${OpenCV_LIBS}
+)
 
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
@@ -165,6 +186,8 @@ add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catk
 target_link_libraries(${PROJECT_NAME}_node
   ${catkin_LIBRARIES}
   ${PROJECT_NAME}
+  ${OpenCV_LIBS}
+  ${PCL_LIBRARIES}
 )
 
 add_executable(test src/test.cpp)

@@ -12,10 +12,16 @@ class Scene {
 public:
   SofA& addSofA() {sofa_.push_back(SofA{}); return sofa_.back();}
   void accept(SceneWriter& writer);
+  void reset() {sofa_.clear();};
+  void setPercept(const Percept& percept) {
+      percept_ = percept;
+  }
+
   std::mutex lock_;
 
 private:
   std::vector<SofA> sofa_;
+  Percept percept_;
 };
 } // namespace svs
 
