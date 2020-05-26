@@ -8,6 +8,9 @@
 namespace svs {
 
 void SceneManager::tick() {
+    if (last_cloud_ == nullptr || last_image_colour_ == nullptr || last_yolo_detections_ == nullptr) return;
+    std::cout << "tick\n";
+
     /* Create local copy of data */
     cv_bridge::CvImagePtr image_cv;
     pcl::PointCloud<pcl::PointXYZ>::Ptr pcl_cloud{new pcl::PointCloud<pcl::PointXYZ>};
@@ -19,7 +22,7 @@ void SceneManager::tick() {
     }
 
     pcl::fromROSMsg (*last_cloud_, *pcl_cloud);
-    Percept curr_percept{image_cv, pcl_cloud};
+    Percept curr_percept{image_cv, pcl_cloud, last_yolo_detections_};
 
     // Create a new scene
     {

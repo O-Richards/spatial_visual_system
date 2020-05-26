@@ -19,7 +19,7 @@ YoloGenerator::YoloGenerator(ros::NodeHandle& nh) :
     // Set the vision frame rate
     unsw_vision_msgs::setFrameRates frameRate;
     frameRate.request.person    = 0;
-    frameRate.request.object    = 5;
+    frameRate.request.object    = 10;
     frameRate.request.furniture = 0;
     ROS_INFO("Waiting for service %s", set_frame_rate_service_name_.c_str());
     frame_rate_service_.waitForExistence();
@@ -39,6 +39,15 @@ void YoloGenerator::read_params() {
 void YoloGenerator::run(Scene& scene) {
     // Call the service
     unsw_vision_msgs::lookup lookup;
+    lookup.request.data_provided = true;
+    sensor_msgs::PointCloud2 cloud_msg;
+    pcl::toROSMsg(*scene.getPercept().cloud_, cloud_msg);
+    lookup.request.cloud = cloud_msg;
+
+    sensor_msgs::Image image_msg;
+    scene.getPercept().rgb_->toImageMsg(image_msg);
+    lookup.request.image = image_msg;
+
     if (!yolo_service_.call(lookup)) {
         ROS_ERROR("Failed calling lookup object on topic %s", yolo_service_name_.c_str());
         return;

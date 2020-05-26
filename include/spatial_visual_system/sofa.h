@@ -13,6 +13,8 @@
 #include <pcl/point_types.h>
 #include <pcl_ros/point_cloud.h>
 
+#include <tmc_darknet_msgs/Detections.h>
+
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/Image.h>
 
@@ -24,12 +26,15 @@ namespace svs {
 
 struct Percept {
   Percept() = default;
-  Percept(cv_bridge::CvImagePtr rgb, const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud) :
-    rgb_{rgb}, 
-    cloud_{cloud} {};
+  Percept(cv_bridge::CvImagePtr rgb, const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,
+          tmc_darknet_msgs::Detections::ConstPtr yolo_detections) :
+      rgb_{rgb}, cloud_{cloud}, yolo_detections_{yolo_detections} {
+  };
 
   cv_bridge::CvImagePtr rgb_;
   boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZ>> cloud_;
+  tmc_darknet_msgs::Detections::ConstPtr yolo_detections_;
+
 };
 
 class SofA {

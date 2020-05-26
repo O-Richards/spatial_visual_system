@@ -18,14 +18,16 @@
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/PointCloud2.h>
 
+#include <tmc_darknet_msgs/Detections.h>
+
 #include <memory>
 
 namespace svs {
 
 class SceneManager {
 private:
-  using SyncPolicy = message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::PointCloud2>;
-  const int queue_size_ = 10;
+  using SyncPolicy = message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::PointCloud2, tmc_darknet_msgs::Detections>;
+  const int queue_size_ = 200; // 10
 
   ros::NodeHandle& nh_;
   svs::Scene scene_;
@@ -36,11 +38,14 @@ private:
   // For subscribing to sensor data
   std::unique_ptr<image_transport::SubscriberFilter> sub_image_colour_;
   std::unique_ptr<message_filters::Subscriber<sensor_msgs::PointCloud2>> sub_cloud_;
+  std::unique_ptr<message_filters::Subscriber<tmc_darknet_msgs::Detections>> sub_detections_;
+
   std::unique_ptr<message_filters::Synchronizer<SyncPolicy>> sub_sync_;
 
   // last sensor data frame
-  sensor_msgs::Image::ConstPtr last_image_colour_;
-  sensor_msgs::PointCloud2::ConstPtr last_cloud_;
+  sensor_msgs::Image::ConstPtr last_image_colour_ = nullptr;
+  sensor_msgs::PointCloud2::ConstPtr last_cloud_ = nullptr;
+  tmc_darknet_msgs::Detections::ConstPtr last_yolo_detections_ = nullptr;
 
 public:
   SceneManager(ros::NodeHandle& nh):
@@ -54,14 +59,21 @@ public:
   
     sub_cloud_ = 
         std::make_unique<message_filters::Subscriber<sensor_msgs::PointCloud2>>(nh, "points", queue_size_);
+
+    sub_detections_ = 
+        std::make_unique<message_filters::Subscriber<tmc_darknet_msgs::Detections>>(nh, "yolo_detections", queue_size_);
   
-    sub_sync_ = std::make_unique<message_filters::Synchronizer<SyncPolicy>>(SyncPolicy(queue_size_), *sub_image_colour_, *sub_cloud_);
-    sub_sync_->registerCallback(boost::bind(&SceneManager::sync_cb, this, _1, _2));
+    sub_sync_ = std::make_unique<message_filters::Synchronizer<SyncPolicy>>(SyncPolicy(queue_size_), *sub_image_colour_, *sub_cloud_, *sub_detections_);
+    sub_sync_->registerCallback(boost::bind(&SceneManager::sync_cb, this, _1, _2, _3));
   };
 
-  void sync_cb(const sensor_msgs::Image::ConstPtr image_colour, const sensor_msgs::PointCloud2ConstPtr cloud) {
+  void sync_cb(const sensor_msgs::Image::ConstPtr image_colour, const sensor_msgs::PointCloud2ConstPtr cloud,
+          tmc_darknet_msgs::Detections::ConstPtr detections) {
       last_image_colour_ = image_colour;
       last_cloud_ = cloud;
+      last_yolo_detections_ = detections;
+
+      std::cout << "cb called\n";
   }
 
   void tick();

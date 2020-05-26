@@ -16,6 +16,7 @@ public:
   void setPercept(const Percept& percept) {
       percept_ = percept;
   }
+  const Percept& getPercept() const {return percept_;};
 
   std::mutex lock_;
 

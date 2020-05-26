@@ -1,7 +1,8 @@
 <launch>  
   <node pkg="spatial_visual_system" type="spatial_visual_system_node" name="svs" output="screen" launch-prefix="valgrind">
-    <remap from="~image" to="/hsrb/head_rgbd_sensor/rgb/image_rect_color" />
-    <remap from="~points" to="/hsrb/head_rgbd_sensor/depth/points" />
+    <remap from="~image" to="/gpu/Republisher/throttled_object" />
+    <remap from="~points" to="/gpu/points" />
+    <remap from="~yolo_detections" to="/yolo2_node/object_detections" />
     <param name="yolo_results_topic" type="str" value="/gpu/ObjectServicesNodelet/lookup_objects" />
     <param name="set_frame_rate_service" type="str" value="/gpu/Republisher/set_frame_rates" />
     <param name="yolo_debug" type="bool" value="true" />

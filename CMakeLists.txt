@@ -32,6 +32,7 @@ find_package(catkin REQUIRED COMPONENTS
   compressed_depth_image_transport
   unsw_vision_msgs
   pcl_conversions
+  tmc_darknet_msgs
 )
 
 find_package(OpenCV 3 REQUIRED)
@@ -131,7 +132,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES spatial_visual_system
- CATKIN_DEPENDS roscpp rospy std_msgs vision_msgs world_model_store_msgs pcl_ros cv_bridge unsw_vision_msgs
+ CATKIN_DEPENDS roscpp rospy std_msgs vision_msgs world_model_store_msgs pcl_ros cv_bridge unsw_vision_msgs tmc_darknet_msgs
  DEPENDS system_lib
 )
 
