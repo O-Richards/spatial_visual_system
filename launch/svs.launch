@@ -1,5 +1,5 @@
 <launch>  
-  <node pkg="spatial_visual_system" type="spatial_visual_system_node" name="svs" output="screen" launch-prefix="valgrind">
+  <node pkg="spatial_visual_system" type="spatial_visual_system_node" name="svs" output="screen" launch-prefix="">
     <remap from="~image" to="/gpu/Republisher/throttled_object" />
     <remap from="~points" to="/gpu/points" />
     <remap from="~yolo_detections" to="/yolo2_node/object_detections" />
