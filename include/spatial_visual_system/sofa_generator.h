@@ -6,18 +6,18 @@
 
 namespace svs {
 class SofAGenerator {
-public:
+ public:
   virtual ~SofAGenerator() = default;
-  virtual void read_params() {};
+  virtual void read_params(){};
   virtual void run(Scene& scene) = 0;
 };
 
 class SofAAnnotator {
-public:
+ public:
   virtual ~SofAAnnotator() = default;
-  virtual void read_params() {};
+  virtual void read_params(){};
   virtual void run(Scene& scene, SofA& sofa) = 0;
 };
-} // namespace svs
+}  // namespace svs
 
 #endif

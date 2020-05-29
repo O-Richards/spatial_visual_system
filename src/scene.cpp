@@ -4,11 +4,11 @@
 
 namespace svs {
 
-void Scene::accept(SceneWriter &writer) {
-    writer.new_scene();
-    for (auto& sofa : sofa_) {
-        writer.write(sofa);
-    }
+void Scene::accept(SceneWriter& writer) {
+  writer.new_scene();
+  for (auto& sofa : sofa_) {
+    writer.write(sofa);
+  }
 }
 
-} // namespace svs
+}  // namespace svs

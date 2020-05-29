@@ -3,11 +3,10 @@
 
 #include <string>
 
-
 namespace svs {
 class SofAAnnotation {
-    virtual std::string to_json() const;
+  virtual std::string to_json() const;
 };
-} // namespace svs
+}  // namespace svs
 
 #endif
