@@ -39,7 +39,10 @@ struct Percept {
 
 class SofA {
 public:
-  SofA() = default;
+  SofA() {
+    add_sofa_fields();
+  }
+
 
   ~SofA() = default;
   // copy
@@ -61,6 +64,19 @@ public:
   //std::vector<SofAAnnotation*> annotations_;
   nlohmann::json annotations_;
   Percept percept_;
+
+private:
+  void add_sofa_fields() {
+    std::vector<std::string> fields = {
+      "description", "associated_text", "pose_x", "pose_y", 
+      "pose_z", "pose_w", "orient_r", "orient_p", "orient_yw",
+      "loc_desc", "colour", "colour_low", "colour_high", "bounding_box", 
+      "image_path", "features", "class_confidence", "fully_observed"};
+
+    for (const auto& field : fields) {
+      annotations_[field] = nullptr;
+    }
+  }
 };
 
 } // namespace svs

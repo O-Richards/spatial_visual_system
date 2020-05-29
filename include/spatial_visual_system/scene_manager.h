@@ -3,6 +3,7 @@
 
 #include "spatial_visual_system/scene.h"
 #include "spatial_visual_system/yolo.h"
+#include "spatial_visual_system/scene_writer.h"
 
 #include <ros/ros.h>
 #include <ros/node_handle.h>
@@ -32,8 +33,11 @@ private:
   ros::NodeHandle& nh_;
   svs::Scene scene_;
   svs::YoloGenerator yolo_generator_;
+  svs::SceneWriter scene_writer_;
+
   double svs_freq_ = 10;
   ros::Rate rate_controller_;
+
 
   // For subscribing to sensor data
   std::unique_ptr<image_transport::SubscriberFilter> sub_image_colour_;
@@ -47,9 +51,11 @@ private:
   sensor_msgs::PointCloud2::ConstPtr last_cloud_ = nullptr;
   tmc_darknet_msgs::Detections::ConstPtr last_yolo_detections_ = nullptr;
 
+  std::mutex data_mutex_;
+
 public:
   SceneManager(ros::NodeHandle& nh):
-    nh_{nh}, yolo_generator_{nh_}, rate_controller_{svs_freq_}
+    nh_{nh}, yolo_generator_{nh_}, scene_writer_{nh_}, rate_controller_{svs_freq_}
   {
     image_transport::ImageTransport it = image_transport::ImageTransport(nh);
     image_transport::TransportHints hints("raw");
@@ -69,11 +75,10 @@ public:
 
   void sync_cb(const sensor_msgs::Image::ConstPtr image_colour, const sensor_msgs::PointCloud2ConstPtr cloud,
           tmc_darknet_msgs::Detections::ConstPtr detections) {
+      std::lock_guard<std::mutex> lock{data_mutex_};
       last_image_colour_ = image_colour;
       last_cloud_ = cloud;
       last_yolo_detections_ = detections;
-
-      std::cout << "cb called\n";
   }
 
   void tick();

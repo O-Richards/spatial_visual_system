@@ -1,7 +1,7 @@
 #include "spatial_visual_system/yolo.h"
 #include "spatial_visual_system/ros_utils.h"
 
-#include<string>
+#include <string>
 
 #include <ros/ros.h>
 
@@ -37,7 +37,7 @@ void YoloGenerator::read_params() {
 }
 
 void YoloGenerator::run(Scene& scene) {
-    // Call the service
+    // Call the Yolo service
     unsw_vision_msgs::lookup lookup;
     lookup.request.data_provided = true;
     sensor_msgs::PointCloud2 cloud_msg;
@@ -47,6 +47,8 @@ void YoloGenerator::run(Scene& scene) {
     sensor_msgs::Image image_msg;
     scene.getPercept().rgb_->toImageMsg(image_msg);
     lookup.request.image = image_msg;
+
+    lookup.request.detections = *scene.getPercept().yolo_detections_;
 
     if (!yolo_service_.call(lookup)) {
         ROS_ERROR("Failed calling lookup object on topic %s", yolo_service_name_.c_str());
@@ -60,8 +62,8 @@ void YoloGenerator::run(Scene& scene) {
         SofA *new_sofa = nullptr;
         // Create a new SofA
         {
-        std::lock_guard<std::mutex> scene_lock{scene.lock_};
-        new_sofa = &scene.addSofA();
+            std::lock_guard<std::mutex> scene_lock{scene.lock_};
+            new_sofa = &scene.addSofA();
         }
         // Lock the new sofa
         std::lock_guard<std::mutex> sofa_lock(new_sofa->lock_);
@@ -77,8 +79,8 @@ void YoloGenerator::run(Scene& scene) {
         double obj_class_conf = std::stod(class_conf_key_val.value);
 
         // Write out class
-        new_sofa->annotations_["class"] = obj_class;
-        new_sofa->annotations_["class_conf"] = obj_class_conf;
+        new_sofa->annotations_["object_category"] = obj_class;
+        new_sofa->annotations_["class_confidence"] = obj_class_conf;
 
         // Write out point
         new_sofa->annotations_["frame_id"] = o.details.frame_id;
