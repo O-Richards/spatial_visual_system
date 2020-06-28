@@ -72,11 +72,13 @@ private:
         "pose_z",           "pose_w",          "orient_r",   "orient_p",
         "orient_yw",        "loc_desc",        "colour",     "colour_low",
         "colour_high",      "bounding_box",    "image_path", "features",
-        "class_confidence", "fully_observed", "frame_id"};
+        "fully_observed", "frame_id", "labels"};
 
     for (const auto& field : fields) {
       annotations_[field] = nullptr;
     }
+    // TODO: @oliri detect fully_observed properly
+    annotations_["fully_observed"] = false;
   }
 };
 

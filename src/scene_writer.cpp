@@ -14,11 +14,18 @@ void SceneWriter::write(SofA &sofa) {
         object_json = sofa.annotations_;
     }
 
+    /*
+     * Prepare the json string required
+     * We need to flatten the labels and find the correct scene id
+     */
+
     object_json[world_model_store_msgs::Details::SCENE_ID] = curr_scene_id_;
+
+    // We flatten the labels into a json formatted string of a list of <label, label confidence>
+    object_json["labels"] = object_json["labels"].dump();
 
     world_model_store_msgs::Insert::Request req{};
     req.insert.json = object_json.dump();
-
 
     ROS_INFO_STREAM_COND(debug_, "SceneWriter::write: adding sofa: " << req.insert.json);
 
@@ -76,9 +83,9 @@ int SceneWriter::new_robot_state() {
                              {"driveable_state", 1},
                              {"arm_state", 0},
                              {"shoulder_state", 0},
-                             {"gripper_state", nullptr},
+                             {"gripper_state", 0},
                              {"holding_object_id", nullptr}
-};
+  };
   req.insert.json = new_data.dump();  // TODO put data in here!
   world_model_store_msgs::Insert::Response resp{};
   new_robot_state_serv_.call(req, resp);

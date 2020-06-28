@@ -2,6 +2,7 @@
 #include "spatial_visual_system/ros_utils.h"
 
 #include <string>
+#include <cmath>
 
 #include <ros/ros.h>
 
@@ -78,13 +79,19 @@ void YoloGenerator::run(Scene& scene) {
         std::string obj_class = class_key_val.value;
         double obj_class_conf = std::stod(class_conf_key_val.value);
 
-        // Write out class
         new_sofa->annotations_["object_category"] = obj_class;
         new_sofa->annotations_["class_confidence"] = obj_class_conf;
+
+        // Write out class
+        if (new_sofa->annotations_["labels"] == nullptr) {
+            new_sofa->annotations_["labels"] = std::vector<std::tuple<std::string, double>>{};
+        }
+        new_sofa->annotations_["labels"].push_back({obj_class, obj_class_conf});
 
         // Write out point
         new_sofa->annotations_["frame_id"] = o.details.frame_id;
         new_sofa->annotations_["pose_x"] = o.details.position.x;
+
         new_sofa->annotations_["pose_y"] = o.details.position.y;
         new_sofa->annotations_["pose_z"] = o.details.position.z;
         
