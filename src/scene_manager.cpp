@@ -10,7 +10,7 @@ namespace svs {
 void SceneManager::tick() {
     /* Crit section data_mutex_ begin */
     std::unique_lock<std::mutex> lock{data_mutex_};
-    if (last_cloud_ == nullptr || last_image_colour_ == nullptr || last_yolo_detections_ == nullptr) return;
+    if (last_cloud_ == nullptr || last_image_colour_ == nullptr) return;
 
     /* Create local copy of data */
     cv_bridge::CvImagePtr image_cv;
@@ -23,7 +23,7 @@ void SceneManager::tick() {
     }
 
     pcl::fromROSMsg (*last_cloud_, *pcl_cloud);
-    Percept curr_percept{image_cv, pcl_cloud, last_yolo_detections_};
+    Percept curr_percept{image_cv, pcl_cloud};
 
     lock.unlock();
     /* Crit section data_mutex_ end */

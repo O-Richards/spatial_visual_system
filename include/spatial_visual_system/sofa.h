@@ -26,14 +26,12 @@ namespace svs {
 
 struct Percept {
   Percept() = default;
-  Percept(cv_bridge::CvImagePtr rgb, const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud,
-          tmc_darknet_msgs::Detections::ConstPtr yolo_detections) :
-      rgb_{rgb}, cloud_{cloud}, yolo_detections_{yolo_detections} {
+  Percept(cv_bridge::CvImagePtr rgb, const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud) :
+      rgb_{rgb}, cloud_{cloud} {
   };
 
   cv_bridge::CvImagePtr rgb_;
   boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZ>> cloud_;
-  tmc_darknet_msgs::Detections::ConstPtr yolo_detections_;
 
 };
 

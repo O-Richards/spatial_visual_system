@@ -49,8 +49,6 @@ void YoloGenerator::run(Scene& scene) {
     scene.getPercept().rgb_->toImageMsg(image_msg);
     lookup.request.image = image_msg;
 
-    lookup.request.detections = *scene.getPercept().yolo_detections_;
-
     if (!yolo_service_.call(lookup)) {
         ROS_ERROR("Failed calling lookup object on topic %s", yolo_service_name_.c_str());
         return;
