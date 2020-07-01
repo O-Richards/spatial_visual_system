@@ -30,7 +30,7 @@ struct Percept {
       rgb_{rgb}, cloud_{cloud} {
   };
 
-  cv_bridge::CvImagePtr rgb_;
+  cv_bridge::CvImageConstPtr rgb_;
   boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZ>> cloud_;
 
 };

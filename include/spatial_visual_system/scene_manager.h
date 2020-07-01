@@ -4,6 +4,7 @@
 #include "spatial_visual_system/scene.h"
 #include "spatial_visual_system/yolo.h"
 #include "spatial_visual_system/scene_writer.h"
+#include "spatial_visual_system/colour_annotator.h"
 
 #include <ros/ros.h>
 #include <ros/node_handle.h>
@@ -33,6 +34,7 @@ private:
   ros::NodeHandle& nh_;
   svs::Scene scene_;
   svs::YoloGenerator yolo_generator_;
+  svs::ColourAnnotator colour_annotator_;
   svs::SceneWriter scene_writer_;
 
   double svs_freq_ = 10;

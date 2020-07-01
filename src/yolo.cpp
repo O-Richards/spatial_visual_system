@@ -5,6 +5,7 @@
 #include <cmath>
 
 #include <ros/ros.h>
+#include <cv_bridge/cv_bridge.h>
 
 #include <nlohmann/json.hpp>
 
@@ -66,6 +67,16 @@ void YoloGenerator::run(Scene& scene) {
         }
         // Lock the new sofa
         std::lock_guard<std::mutex> sofa_lock(new_sofa->lock_);
+
+        ROS_INFO_STREAM("bbox:" << o.details.bbox);
+        // Add in the Percept
+        cv_bridge::CvImage img{};
+        img.header = scene.getPercept().rgb_->header;
+        img.encoding = scene.getPercept().rgb_->encoding;
+        cv::Mat roi = scene.getPercept().rgb_->image(cv::Rect{{static_cast<int>(o.details.bbox.x), static_cast<int>(o.details.bbox.y)},
+                cv::Size{static_cast<int>(o.details.bbox.width), static_cast<int>(o.details.bbox.height)}});
+        img.image = roi;
+        new_sofa->percept_.rgb_ = boost::make_shared<const cv_bridge::CvImage>(img);
 
         // Find class
         diagnostic_msgs::KeyValue class_key_val = *std::find_if(o.details.tags.begin(), o.details.tags.end(), 

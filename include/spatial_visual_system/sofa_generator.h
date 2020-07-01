@@ -16,7 +16,7 @@ class SofAAnnotator {
 public:
   virtual ~SofAAnnotator() = default;
   virtual void read_params() {};
-  virtual void run(Scene& scene, SofA& sofa) = 0;
+  virtual void run(const Scene& scene, SofA& sofa) = 0;
 };
 } // namespace svs
 

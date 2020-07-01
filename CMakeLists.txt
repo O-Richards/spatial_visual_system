@@ -154,6 +154,7 @@ add_library(${PROJECT_NAME}
   src/yolo.cpp
   src/scene_writer.cpp
   src/scene_manager.cpp
+  src/colour_annotator.cpp
 )
 
 ## Add cmake target dependencies of the library

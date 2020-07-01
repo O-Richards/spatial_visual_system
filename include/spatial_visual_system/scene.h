@@ -18,6 +18,9 @@ public:
   }
   const Percept& getPercept() const {return percept_;};
 
+  const std::vector<SofA>& getSofA() const {return sofa_;};
+  std::vector<SofA>& getSofA() {return sofa_;};
+
   std::mutex lock_;
 
 private:
