@@ -1,6 +1,8 @@
-#include "spatial_visual_system/colour_annotator.h"
+#include "spatial_visual_system/sofa_annotator.h"
 
 #include <mutex>
+#include <algorithm>
+#include <vector>
 
 namespace svs {
 
@@ -55,42 +57,44 @@ cv::Vec3f center_label_value(const cv::Mat& labels, const cv::Mat& colour_center
     return colour_centers.at<cv::Vec3f>(max_label);
 }
 
-void ColourAnnotator::run(const Scene& scene, SofA& sofa) {
+void ColourAnnotator::run(const Scene& scene, std::vector<SofA>& sofa_list) {
     // Lock the sofa
-    std::lock_guard<decltype(sofa.lock_)> lock{sofa.lock_};
+    for (auto& sofa : sofa_list) {
+        std::lock_guard<decltype(sofa.lock_)> lock{sofa.lock_};
 
-    cv::Mat img;
-    sofa.percept_.rgb_->image.convertTo(img, CV_32F, 1.0/255); // Normalise to 0 -> 1 range
-    auto img_size = img.size();
-    img = img.reshape(0, img.rows * img.cols); // Flatten into 1 row per pixel
+        cv::Mat img;
+        sofa.percept_.rgb_->image.convertTo(img, CV_32F, 1.0/255); // Normalise to 0 -> 1 range
+        auto img_size = img.size();
+        img = img.reshape(0, img.rows * img.cols); // Flatten into 1 row per pixel
 
-    // Apply K means clustering to find the object colour with 2 clusters
-    // (1 for image, 1 for BG)
-    cv::Mat best_labels;
-    cv::Mat colour_centers;
-    auto criteria = cv::TermCriteria{CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 10, 1.0};
-    cv::kmeans(img, NUM_MEANS, best_labels, criteria, 3, cv::KMEANS_PP_CENTERS, colour_centers);
-
-#if DEBUG
-    ROS_INFO_STREAM("Img dimensions" << img.size());
-    ROS_INFO_STREAM("best_labels dimensions" << best_labels.size());
-    ROS_INFO_STREAM("colour_centers dimensions" << colour_centers.size());
-    ROS_INFO_STREAM("Detected colours (bgr)" << colour_centers * 255);
-#endif
-
-    auto dominant_colour = center_label_value(best_labels, colour_centers, img_size);
-
-    std::ostringstream colour_rgb_string;
-    // Colour is in BGR in range 0-> 1 We want RGB in range 0->255
-    colour_rgb_string << dominant_colour[2] * 255 << ", " << dominant_colour[1] * 255 << ", " << dominant_colour[0] * 255;
-    //assert(sofa.percept_.rgb_->encoding == cv_bridge::CV_8UC3);
-    sofa.annotations_["colour_rgb_low"] = colour_rgb_string.str();
+        // Apply K means clustering to find the object colour with 2 clusters
+        // (1 for image, 1 for BG)
+        cv::Mat best_labels;
+        cv::Mat colour_centers;
+        auto criteria = cv::TermCriteria{CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 10, 1.0};
+        cv::kmeans(img, NUM_MEANS, best_labels, criteria, 3, cv::KMEANS_PP_CENTERS, colour_centers);
 
 #if DEBUG
-    ROS_INFO_STREAM("detected colour: " << colour_rgb_string.str());
-    cv::imshow("sofa", sofa.percept_.rgb_->image);
-    cv::waitKey(1);
+        ROS_INFO_STREAM("Img dimensions" << img.size());
+        ROS_INFO_STREAM("best_labels dimensions" << best_labels.size());
+        ROS_INFO_STREAM("colour_centers dimensions" << colour_centers.size());
+        ROS_INFO_STREAM("Detected colours (bgr)" << colour_centers * 255);
 #endif
+
+        auto dominant_colour = center_label_value(best_labels, colour_centers, img_size);
+
+        std::ostringstream colour_rgb_string;
+        // Colour is in BGR in range 0-> 1 We want RGB in range 0->255
+        colour_rgb_string << dominant_colour[2] * 255 << ", " << dominant_colour[1] * 255 << ", " << dominant_colour[0] * 255;
+        //assert(sofa.percept_.rgb_->encoding == cv_bridge::CV_8UC3);
+        sofa.annotations_["colour_rgb_low"] = colour_rgb_string.str();
+
+#if DEBUG
+        ROS_INFO_STREAM("detected colour: " << colour_rgb_string.str());
+        cv::imshow("sofa", sofa.percept_.rgb_->image);
+        cv::waitKey(1);
+#endif
+    }
 }
 
 

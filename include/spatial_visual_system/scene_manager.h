@@ -4,7 +4,7 @@
 #include "spatial_visual_system/scene.h"
 #include "spatial_visual_system/yolo.h"
 #include "spatial_visual_system/scene_writer.h"
-#include "spatial_visual_system/colour_annotator.h"
+#include "spatial_visual_system/sofa_annotator.h"
 
 #include <ros/ros.h>
 #include <ros/node_handle.h>

@@ -36,9 +36,7 @@ void SceneManager::tick() {
     }
     yolo_generator_.run(scene_); 
 
-    for (auto& s : scene_.getSofA()) {
-        colour_annotator_.run(scene_, s);
-    }
+    colour_annotator_.run(scene_, scene_.getSofA());
 
     scene_.accept(scene_writer_);
 
