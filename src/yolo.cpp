@@ -1,5 +1,6 @@
 #include "spatial_visual_system/yolo.h"
 #include "spatial_visual_system/ros_utils.h"
+#include "spatial_visual_system/3d_helpers.h"
 
 #include <string>
 #include <cmath>
@@ -19,6 +20,7 @@ YoloGenerator::YoloGenerator(ros::NodeHandle& nh) :
     frame_rate_service_ = nh_.serviceClient<unsw_vision_msgs::setFrameRates>(set_frame_rate_service_name_);
 
     // Set the vision frame rate
+    /*
     unsw_vision_msgs::setFrameRates frameRate;
     frameRate.request.person    = 0;
     frameRate.request.object    = 10;
@@ -28,6 +30,7 @@ YoloGenerator::YoloGenerator(ros::NodeHandle& nh) :
     if (!frame_rate_service_.call(frameRate)) {
         ROS_ERROR("Failed to set vision frame rate!");
     }
+    */
 
     ROS_INFO("Finished setting up YoloGenerator");
 }
@@ -73,10 +76,18 @@ void YoloGenerator::run(Scene& scene) {
         cv_bridge::CvImage img{};
         img.header = scene.getPercept().rgb_->header;
         img.encoding = scene.getPercept().rgb_->encoding;
-        cv::Mat roi = scene.getPercept().rgb_->image(cv::Rect{{static_cast<int>(o.details.bbox.x), static_cast<int>(o.details.bbox.y)},
-                cv::Size{static_cast<int>(o.details.bbox.width), static_cast<int>(o.details.bbox.height)}});
+        auto boundry = cv::Rect{{static_cast<int>(o.details.bbox.x), static_cast<int>(o.details.bbox.y)},
+                cv::Size{static_cast<int>(o.details.bbox.width), static_cast<int>(o.details.bbox.height)}};
+        cv::Mat roi = scene.getPercept().rgb_->image(boundry);
         img.image = roi;
         new_sofa->percept_.rgb_ = boost::make_shared<const cv_bridge::CvImage>(img);
+
+        // Find cloud indicies
+        int img_cols = scene.getPercept().rgb_->image.cols;
+        std::vector<int> cloud_indexs{};
+        svs::extractCloudFromBbox(scene.getPercept().cloud_, img_cols, boundry, cloud_indexs);
+        new_sofa->cloud_index_mask_ = cloud_indexs;
+            
 
         // Find class
         diagnostic_msgs::KeyValue class_key_val = *std::find_if(o.details.tags.begin(), o.details.tags.end(), 

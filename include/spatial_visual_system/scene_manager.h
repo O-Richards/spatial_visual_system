@@ -35,10 +35,11 @@ private:
   svs::Scene scene_;
   svs::YoloGenerator yolo_generator_;
   svs::ColourAnnotator colour_annotator_;
+  svs::PlaneAnnotator plane_annotator_;
   svs::SceneWriter scene_writer_;
 
   double svs_freq_ = 10;
-  ros::Rate rate_controller_;
+  ros::Timer tick_timer_;
 
 
   // For subscribing to sensor data
@@ -54,21 +55,7 @@ private:
   std::mutex data_mutex_;
 
 public:
-  SceneManager(ros::NodeHandle& nh):
-    nh_{nh}, yolo_generator_{nh_}, scene_writer_{nh_}, rate_controller_{svs_freq_}
-  {
-    image_transport::ImageTransport it = image_transport::ImageTransport(nh);
-    image_transport::TransportHints hints("raw");
-  
-    sub_image_colour_ = 
-        std::make_unique<image_transport::SubscriberFilter>(it, "image", queue_size_, hints);
-  
-    sub_cloud_ = 
-        std::make_unique<message_filters::Subscriber<sensor_msgs::PointCloud2>>(nh, "points", queue_size_);
-
-    sub_sync_ = std::make_unique<message_filters::Synchronizer<SyncPolicy>>(SyncPolicy(queue_size_), *sub_image_colour_, *sub_cloud_);
-    sub_sync_->registerCallback(boost::bind(&SceneManager::sync_cb, this, _1, _2));
-  };
+  SceneManager(ros::NodeHandle& nh);
 
   void sync_cb(const sensor_msgs::Image::ConstPtr image_colour, const sensor_msgs::PointCloud2ConstPtr cloud) {
       std::lock_guard<std::mutex> lock{data_mutex_};
@@ -76,7 +63,7 @@ public:
       last_cloud_ = cloud;
   }
 
-  void tick();
+  void tick(const ros::TimerEvent& event);
 };
 
 

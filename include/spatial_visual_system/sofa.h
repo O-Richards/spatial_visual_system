@@ -31,7 +31,7 @@ struct Percept {
   };
 
   cv_bridge::CvImageConstPtr rgb_;
-  boost::shared_ptr<const pcl::PointCloud<pcl::PointXYZ>> cloud_;
+  pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_;
 
 };
 
@@ -62,6 +62,7 @@ public:
   //std::vector<SofAAnnotation*> annotations_;
   nlohmann::json annotations_;
   Percept percept_;
+  std::vector<int> cloud_index_mask_;
 
 private:
   void add_sofa_fields() {

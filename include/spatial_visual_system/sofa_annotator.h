@@ -6,6 +6,10 @@
 
 #include <vector>
 
+#include <pcl/point_types.h>
+
+#include <tf/transform_listener.h>
+
 namespace svs {
 
 class SofAAnnotator {
@@ -25,8 +29,18 @@ private:
 
 class PlaneAnnotator : public SofAAnnotator {
 public:
+  PlaneAnnotator(ros::NodeHandle& nh);
   virtual ~PlaneAnnotator() = default;
   virtual void run(const Scene& scene, std::vector<SofA>& sofa);
+private:
+  using Point = pcl::PointXYZ;
+  using PointCloud = pcl::PointCloud<Point>;
+  const std::string working_frame_ = "base_footprint";
+  ros::NodeHandlePtr nh_;
+  ros::Publisher plane_pub_;
+  tf::TransformListener tf_listener_;
+
+  void removeGround(PointCloud::ConstPtr in_cloud, PointCloud::Ptr out_cloud);
 
 };
 

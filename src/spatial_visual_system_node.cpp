@@ -10,12 +10,8 @@ int main(int argc, char **argv) {
     ROS_INFO("Beep boop... starting up spatial_visual_system");
 
     svs::SceneManager scene_manager{nh};
-
-    ROS_INFO("Ticking scene_manager. No explicit spins!");
-    while(ros::ok()) {
-        scene_manager.tick();
-        ros::spinOnce();
-    }
+    
+    ros::spin();
 
     ROS_INFO("spatial_visual_system shutting down!");
 }

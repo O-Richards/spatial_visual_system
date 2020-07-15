@@ -9,15 +9,11 @@ namespace svs {
 void SvsNodelet::onInit() {
     NODELET_INFO("Beep boop... starting up spatial_visual_system");
 
-    auto nh = getPrivateNodeHandle();
-
+    auto& nh = getPrivateNodeHandle();
     svs::SceneManager scene_manager{nh};
 
     ROS_INFO("Ticking scene_manager. No explicit spins!");
-    while(ros::ok()) {
-        scene_manager.tick();
-        ros::spinOnce();
-    }
+    ros::spin();
 
     ROS_INFO("spatial_visual_system shutting down!");
 }

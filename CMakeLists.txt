@@ -156,6 +156,8 @@ add_library(${PROJECT_NAME}
   src/scene_manager.cpp
   src/colour_annotator.cpp
   src/svs_nodelet.cpp
+  src/plane_annotator.cpp
+  src/3d_helpers.cpp
 )
 
 ## Add cmake target dependencies of the library
