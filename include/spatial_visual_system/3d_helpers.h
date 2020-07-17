@@ -17,14 +17,23 @@ void extractCloudFromBbox(pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_in,
         int imageCols, cv::Rect& boundary, 
         std::vector<int>& cloud_indicies_out);
 
-
-template <typename Cloud>
-void extractCloudFromIndicies(typename Cloud::ConstPtr cloud, 
-        const std::vector<int>& indicies, Cloud& cloud_out) {
+/*
+void extractCloudFromIndicies(NormalCloud::ConstPtr cloud, 
+        const std::vector<int>& indicies, NormalCloud& cloud_out) {
     for (const auto i : indicies) {
         cloud_out.push_back(cloud->at(i));
     }
 }
+*/
+
+/*
+void extractCloudFromIndicies(PointCloud::ConstPtr cloud, 
+        const std::vector<int>& indicies, PointCloud& cloud_out) {
+    for (const auto i : indicies) {
+        cloud_out.push_back(cloud->at(i));
+    }
+}
+*/
 
 } // namespace svs
 #endif
