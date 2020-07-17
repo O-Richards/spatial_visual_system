@@ -44,6 +44,14 @@ private:
 
 };
 
+class ShapeAnnotator : public SofAAnnotator {
+public:
+  ShapeAnnotator(ros::NodeHandle& nh);
+  virtual ~ShapeAnnotator() = default;
+  virtual void run(const Scene& scene, std::vector<SofA>& sofa);
+};
+
 } // namespace svs
+
 
 #endif

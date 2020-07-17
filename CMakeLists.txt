@@ -158,6 +158,8 @@ add_library(${PROJECT_NAME}
   src/svs_nodelet.cpp
   src/plane_annotator.cpp
   src/3d_helpers.cpp
+  src/shape_annotator.cpp
+  src/sofa.cpp
 )
 
 ## Add cmake target dependencies of the library

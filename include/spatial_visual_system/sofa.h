@@ -12,6 +12,7 @@
 
 #include <pcl/point_types.h>
 #include <pcl_ros/point_cloud.h>
+#include <pcl/features/normal_3d.h>
 
 #include <tmc_darknet_msgs/Detections.h>
 
@@ -25,22 +26,36 @@
 namespace svs {
 
 struct Percept {
+  using Point = pcl::PointXYZ;
+  using PointCloud = pcl::PointCloud<Point>;
+  using Normal = pcl::Normal;
+  using NormalCloud = pcl::PointCloud<Normal>;
+
   Percept() = default;
-  Percept(cv_bridge::CvImagePtr rgb, const pcl::PointCloud<pcl::PointXYZ>::Ptr cloud) :
-      rgb_{rgb}, cloud_{cloud} {
+
+  Percept(cv_bridge::CvImagePtr rgb, pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud) :
+      rgb_{rgb}, cloud_{cloud}, cloud_normals_{nullptr} {
+          if (cloud_ != nullptr) {
+              // Calculate cloud normal
+              pcl::NormalEstimation<Point, Normal> normal_calc{};
+              normal_calc.setInputCloud(cloud_);
+              auto cloud_norm = boost::make_shared<NormalCloud>();
+              normal_calc.compute(*cloud_norm);
+              cloud_normals_ = cloud_norm;
+          }
   };
 
   cv_bridge::CvImageConstPtr rgb_;
-  pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud_;
-
+  PointCloud::ConstPtr cloud_;
+  NormalCloud::ConstPtr cloud_normals_;
 };
 
 class SofA {
 public:
-  SofA() {
+  SofA() :
+    id_{next_sofa_no_++} {
     add_sofa_fields();
   }
-
 
   ~SofA() = default;
   // copy
@@ -58,6 +73,10 @@ public:
     *this = std::move(sofa);
   }
 
+  unsigned int getId() const {
+    return id_;
+  }
+
   std::mutex lock_;
   //std::vector<SofAAnnotation*> annotations_;
   nlohmann::json annotations_;
@@ -65,6 +84,8 @@ public:
   std::vector<int> cloud_index_mask_;
 
 private:
+  static unsigned int next_sofa_no_;
+  unsigned int id_;
   void add_sofa_fields() {
     std::vector<std::string> fields = {
         "description",      "associated_text", "pose_x",     "pose_y",
@@ -80,6 +101,7 @@ private:
     annotations_["fully_observed"] = false;
   }
 };
+
 
 } // namespace svs
 

@@ -99,9 +99,8 @@ void PlaneAnnotator::run(const Scene& scene, std::vector<SofA>& sofa_list) {
         sofa.cloud_index_mask_ = diff;
     }
 
+    // TODO
     // Add this plane as a SofA
-    
-
 }
 
 void PlaneAnnotator::removeGround(PointCloud::ConstPtr in_cloud, 
