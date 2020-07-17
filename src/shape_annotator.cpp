@@ -9,7 +9,12 @@
 #include <pcl/filters/extract_indices.h>
 #include <pcl/segmentation/sac_segmentation.h>
 
+#include <sstream>
+
 namespace svs {
+
+#define DEBUG 1
+
 static const double CYLINDER_INLIERS_PROPORTION_THRESH = 0.5;
 
 ShapeAnnotator::ShapeAnnotator(ros::NodeHandle& nh) {
@@ -23,12 +28,16 @@ void ShapeAnnotator::run(const Scene& scene, std::vector<SofA>& sofa_list) {
 
         // Extract the needed data of the SOFA
         PointCloud::Ptr sofa_cloud = boost::make_shared<PointCloud>();
-        svs::extractCloudFromIndicies(scene.getPercept().cloud_, 
-                sofa.cloud_index_mask_, *sofa_cloud);
+        auto scene_cloud = scene.getPercept().cloud_;
+        for (const auto i : sofa.cloud_index_mask_) {
+            sofa_cloud->push_back(scene_cloud->at(i));
+        }
         
         NormalCloud::Ptr sofa_normals = boost::make_shared<NormalCloud>();
-        svs::extractCloudFromIndicies(scene.getPercept().cloud_normals_, 
-                sofa.cloud_index_mask_, *sofa_normals);
+        auto scene_normals = scene.getPercept().cloud_normals_;
+        for (const auto i : sofa.cloud_index_mask_) {
+            sofa_normals->push_back(scene_normals->at(i));
+        }
 
 
         // Apply RanSAC to try fit a cylinder
@@ -71,8 +80,28 @@ void ShapeAnnotator::run(const Scene& scene, std::vector<SofA>& sofa_list) {
         }
 
 #if DEBUG
-        ROS_INFO_STREAM(__FUNCTION__ << " extract cylinder from sofa " << sofa.getId() << " found " << num_inliers << " inliers "
+        ROS_INFO_STREAM(__PRETTY_FUNCTION__ << " extract cylinder from sofa " << sofa.getId() << " found " << num_inliers << " inliers "
                 << proportion_inliers*100 << "\% of cloud");
+        if (num_inliers > 0) {
+
+            auto cylinder_cloud = boost::make_shared<svs::PointCloud>();
+            pcl::ExtractIndices<svs::Point> extract{};
+            extract.setInputCloud(sofa_cloud);
+            extract.setIndices(cylinder_inliers);
+            extract.setNegative(false);
+            extract.filter(*cylinder_cloud);
+
+            std::ostringstream out_name;
+            out_name << "/home/oli/cylinder_fits/sofa_" << sofa.getId();
+
+            pcl::PCDWriter writer{};
+            try {
+                writer.write<svs::Point>(out_name.str() + "_cylinder_filtered.pcd", *cylinder_cloud);
+                writer.write<svs::Point>(out_name.str() + ".pcd", *sofa_cloud);
+            } catch (const std::exception& e) { 
+                ROS_WARN_STREAM(__PRETTY_FUNCTION__ << e.what());
+            }
+        }
 
 #endif
     }

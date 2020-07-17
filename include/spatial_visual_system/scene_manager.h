@@ -36,6 +36,7 @@ private:
   svs::YoloGenerator yolo_generator_;
   svs::ColourAnnotator colour_annotator_;
   svs::PlaneAnnotator plane_annotator_;
+  svs::ShapeAnnotator shape_annotator_;
   svs::SceneWriter scene_writer_;
 
   double svs_freq_ = 10;

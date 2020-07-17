@@ -31,10 +31,26 @@ void PlaneAnnotator::run(const Scene& scene, std::vector<SofA>& sofa_list) {
     auto scene_cloud = scene.getPercept().cloud_;
     // Check frame is what we expect
     if (scene_cloud->header.frame_id != working_frame_) {
+#if DEBUG
+        ROS_INFO_STREAM(__FUNCTION__ << " converting scene cloud to frame " << working_frame_);
+#endif
+        std::string transform_error{};
+        auto header = pcl_conversions::fromPCL(scene_cloud->header);
+        auto tf_avail = tf_listener_.waitForTransform(working_frame_, header.frame_id, 
+                header.stamp, ros::Duration{1},
+                ros::Duration{0.1}, &transform_error);
+
+        if (!tf_avail) ROS_ERROR_STREAM(__FUNCTION__ << " wait for transform failed " << transform_error);
+
         auto transformed_cloud = boost::make_shared<PointCloud>();
         pcl_ros::transformPointCloud(working_frame_, *scene_cloud, *transformed_cloud, tf_listener_);
         scene_cloud = transformed_cloud;
     }
+
+#if DEBUG
+    ROS_INFO_STREAM(__FUNCTION__ << " fitting plane to cloud in frame " << scene_cloud->header.frame_id);
+#endif
+
     removeGround(scene_cloud, ground_removed);
 
     // Find plane in cloud
@@ -53,7 +69,7 @@ void PlaneAnnotator::run(const Scene& scene, std::vector<SofA>& sofa_list) {
     pcl::SACSegmentation<Point> seg;
     
     // Optional
-    seg.setOptimizeCoefficients (true);
+    seg.setOptimizeCoefficients(true);
     
     // Mandatory
     // should ID planes perpendicular to the z axis (ex: tabletops)
@@ -69,13 +85,13 @@ void PlaneAnnotator::run(const Scene& scene, std::vector<SofA>& sofa_list) {
     // 5 degree in rads
     seg.setEpsAngle((5.0*3.14)/180.0); 
 
-    seg.setMaxIterations(500); 
-    seg.setMethodType (pcl::SAC_RANSAC);
+    seg.setMaxIterations(1000); 
+    seg.setMethodType(pcl::SAC_RANSAC);
     
     // distance in m
     // peter: 0.01 (10mm) might be slightly too aggressive...
     // actually, 10mm may not be aggressive enough.. trying 15mm
-    seg.setDistanceThreshold (0.015);
+    seg.setDistanceThreshold (0.005);
 
     seg.setInputCloud(ground_removed);
     seg.segment (*inliers, *coefficients);

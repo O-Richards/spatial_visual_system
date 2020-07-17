@@ -27,7 +27,7 @@ void SceneWriter::write(SofA &sofa) {
     world_model_store_msgs::Insert::Request req{};
     req.insert.json = object_json.dump();
 
-    ROS_INFO_STREAM_COND(debug_, "SceneWriter::write: adding sofa: " << req.insert.json);
+    ROS_INFO_STREAM_COND(debug_, "SceneWriter::write: adding sofa: " << sofa.getId() << ": " << req.insert.json);
 
     world_model_store_msgs::Insert::Response resp{};
 
