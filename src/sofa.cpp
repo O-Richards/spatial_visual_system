@@ -2,6 +2,6 @@
 
 namespace svs {
 
-unsigned int SofA::next_sofa_no_{0};
+unsigned int SofA::next_sofa_no_ = 0;
 
 } // namespace svs

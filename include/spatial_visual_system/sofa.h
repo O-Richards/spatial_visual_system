@@ -32,6 +32,11 @@ struct Percept {
   using NormalCloud = pcl::PointCloud<Normal>;
 
   Percept() = default;
+  Percept(const Percept&) = default;
+  Percept(Percept&& s) = default;
+  Percept& operator=(Percept&&) = default;
+  Percept& operator=(const Percept&) = default;
+  ~Percept() = default;
 
   Percept(cv_bridge::CvImagePtr rgb, pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud) :
       rgb_{rgb}, cloud_{cloud}, cloud_normals_{nullptr} {
@@ -39,6 +44,12 @@ struct Percept {
               // Calculate cloud normal
               pcl::NormalEstimation<Point, Normal> normal_calc{};
               normal_calc.setInputCloud(cloud_);
+              // Create an empty kdtree representation, and pass it to the normal estimation object.
+              // Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
+              pcl::search::KdTree<Point>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ> ());
+              normal_calc.setSearchMethod(tree);
+              // Use all neighbors in a sphere of radius 3cm
+              normal_calc.setRadiusSearch (0.03);
               auto cloud_norm = boost::make_shared<NormalCloud>();
               normal_calc.compute(*cloud_norm);
               cloud_normals_ = cloud_norm;
@@ -56,16 +67,18 @@ public:
     id_{next_sofa_no_++} {
     add_sofa_fields();
   }
+  SofA(const SofA& sofa) = delete;
 
   ~SofA() = default;
   // copy
-  SofA(const SofA& sofa) = delete;
   SofA& operator=(const SofA&) = delete;
   // move
   SofA& operator=(SofA&& sofa) {
       if (this != &sofa) {
           annotations_ = std::move(sofa.annotations_);
           percept_ = std::move(sofa.percept_);
+          cloud_index_mask_ = std::move(sofa.cloud_index_mask_);
+          id_ = std::move(sofa.id_);
       }
       return *this;
   }
