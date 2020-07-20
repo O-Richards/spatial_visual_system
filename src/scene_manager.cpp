@@ -8,7 +8,7 @@
 namespace svs {
 
 SceneManager::SceneManager(ros::NodeHandle& nh):
-    nh_{nh}, yolo_generator_{nh_}, plane_annotator_{nh_}, shape_annotator_{nh_}, scene_writer_{nh_}
+    nh_{nh}, yolo_generator_{nh_}, plane_annotator_{nh_}, shape_annotator_{nh_}, size_annotator_{nh_}, scene_writer_{nh_}
 {
     image_transport::ImageTransport it = image_transport::ImageTransport(nh);
     image_transport::TransportHints hints("raw");
@@ -55,8 +55,8 @@ void SceneManager::tick(const ros::TimerEvent& event) {
     }
     yolo_generator_.run(scene_); 
 
-
     //plane_annotator_.run(scene_, scene_.getSofA());
+    size_annotator_.run(scene_, scene_.getSofA());
     colour_annotator_.run(scene_, scene_.getSofA());
     shape_annotator_.run(scene_, scene_.getSofA());
 

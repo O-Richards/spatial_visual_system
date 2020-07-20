@@ -51,7 +51,20 @@ public:
   virtual void run(const Scene& scene, std::vector<SofA>& sofa);
 };
 
+class Size3DAnnotator : public SofAAnnotator {
+public:
+  Size3DAnnotator(ros::NodeHandle& nh) {};
+  virtual ~Size3DAnnotator() = default;
+  virtual void run(const Scene& scene, std::vector<SofA>& sofa);
+  virtual void read_params();
+private:
+  const std::string camera_link_frame_ = "head_rgbd_sensor_link";
+  const double small_to_med_thresh_ = 0.04; // m^2
+  const double med_to_large_thresh = 0.08; // m^2
+  const double large_to_v_large_thresh = 0.4; // m^2
+
+  void groundArea(double area, std::string& semantic_label, double& confidence) const;
+};
+
 } // namespace svs
-
-
 #endif
