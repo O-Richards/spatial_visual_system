@@ -20,6 +20,7 @@
 #include <sensor_msgs/Image.h>
 
 #include <boost/shared_ptr.hpp>
+#include <boost/optional.hpp>
 
 #include <memory>
 
@@ -95,6 +96,7 @@ public:
   nlohmann::json annotations_;
   Percept percept_;
   std::vector<int> cloud_index_mask_;
+  boost::optional<cv::Rect> bbox_;
 
 private:
   static unsigned int next_sofa_no_;

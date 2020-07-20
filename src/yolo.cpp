@@ -114,6 +114,9 @@ void YoloGenerator::run(Scene& scene) {
 
         new_sofa->annotations_["pose_y"] = o.details.position.y;
         new_sofa->annotations_["pose_z"] = o.details.position.z;
+
+        // Write out image bounding box (opencv style point at top left + width & height)
+        new_sofa->bbox_ = boundry;
         
         
         if (debug_) {
