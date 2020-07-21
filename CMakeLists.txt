@@ -33,6 +33,7 @@ find_package(catkin REQUIRED COMPONENTS
   unsw_vision_msgs
   pcl_conversions
   tmc_darknet_msgs
+  message_generation 
 )
 
 find_package(OpenCV 3 REQUIRED)
@@ -74,11 +75,10 @@ find_package(Boost REQUIRED COMPONENTS system)
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files( DIRECTORY msg
+  FILES
+  Detection.msg
+)
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -95,10 +95,10 @@ find_package(Boost REQUIRED COMPONENTS system)
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs#   vision_msgs#   world_model_store_msgs
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs#   vision_msgs#   world_model_store_msgs
+)
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -132,7 +132,7 @@ find_package(Boost REQUIRED COMPONENTS system)
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES spatial_visual_system
- CATKIN_DEPENDS roscpp rospy std_msgs vision_msgs world_model_store_msgs pcl_ros cv_bridge unsw_vision_msgs tmc_darknet_msgs
+ CATKIN_DEPENDS roscpp rospy std_msgs vision_msgs world_model_store_msgs pcl_ros cv_bridge unsw_vision_msgs tmc_darknet_msgs message_runtime
  DEPENDS system_lib
 )
 

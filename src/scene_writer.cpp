@@ -5,6 +5,8 @@
 
 #include <ros/ros.h>
 
+#include <spatial_visual_system/Detection.h>
+
 namespace svs {
 void SceneWriter::write(SofA &sofa) {
     nlohmann::json object_json;
@@ -24,23 +26,31 @@ void SceneWriter::write(SofA &sofa) {
     // We flatten the labels into a json formatted string of a list of <label, label confidence>
     object_json["labels"] = object_json["labels"].dump();
 
+#if USE_SERVICE
     world_model_store_msgs::Insert::Request req{};
     req.insert.json = object_json.dump();
 
     ROS_INFO_STREAM_COND(debug_, "SceneWriter::write: adding sofa: " << sofa.getId() << ": " << req.insert.json);
 
     world_model_store_msgs::Insert::Response resp{};
-
     new_scene_obj_serv_.call(req, resp);
-
     if (resp.status == resp.FAIL) {
         ROS_WARN_STREAM("SceneWriter::write: Failed to create new scene object." << 
                 " service response: " << resp <<
                 " Request: " << req);
     }
+#endif
+    
+    // Publish detection to topic
+    spatial_visual_system::Detection detection_msg{};
+    detection_msg.json = object_json.dump();
+    detection_msg.sofa_id = sofa.getId();
+    detection_msg.scene_id = curr_scene_id_;
+    detection_pub_.publish(detection_msg);
 }
 
 void SceneWriter::new_scene() {
+#if USE_SERVICE
     // Insert a new scene into the db
     world_model_store_msgs::Insert::Request req{};
     world_model_store_msgs::Insert::Response resp{};
@@ -59,6 +69,9 @@ void SceneWriter::new_scene() {
     }
 
     curr_scene_id_ = resp.inserted_id;
+#else
+    curr_scene_id_++;
+#endif
 }
 
 // return -1 on error
@@ -86,9 +99,12 @@ int SceneWriter::new_robot_state() {
                              {"gripper_state", 0},
                              {"holding_object_id", nullptr}
   };
+
   req.insert.json = new_data.dump();  // TODO put data in here!
   world_model_store_msgs::Insert::Response resp{};
+#if USE_SERVICE
   new_robot_state_serv_.call(req, resp);
+#endif
   if (resp.status == resp.FAIL) {
     ROS_ERROR_STREAM(
         "SceneWriter::new_robot_state: Failed to create new robot state. "

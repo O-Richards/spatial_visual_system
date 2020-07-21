@@ -11,6 +11,7 @@ int main(int argc, char **argv) {
 
     svs::SceneManager scene_manager{nh};
     
+    ROS_INFO("Beep boop... set up starting to spin");
     ros::spin();
 
     ROS_INFO("spatial_visual_system shutting down!");
