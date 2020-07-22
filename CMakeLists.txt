@@ -161,6 +161,7 @@ add_library(${PROJECT_NAME}
   src/shape_annotator.cpp
   src/sofa.cpp
   src/size_3d_annotator.cpp
+  src/sift_recognition_annotator.cpp
 )
 
 ## Add cmake target dependencies of the library

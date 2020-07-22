@@ -1,9 +1,10 @@
 <launch>  
-  <node pkg="spatial_visual_system" type="spatial_visual_system_node" name="svs" output="screen" launch-prefix="" >
+  <node pkg="spatial_visual_system" type="spatial_visual_system_node" name="svs" output="screen" launch-prefix="gdb --args" >
     <remap from="~image" to="/gpu/Republisher/throttled_object" />
     <remap from="~points" to="/gpu/points" />
-    <remap from="~yolo_detections" to="/yolo2_node/object_detections" />
+    <remap from="~processed_yolo_detections" to="/gpu/ObjectServicesNodelet/processed_detections" />
     <remap from="~detections" to="/spatial_visual_system/detections" />
+    <remap from="~recognise_object" to="/gpu/ObjectRecognitionNodelet/recognise_object"/>
     <param name="yolo_results_topic" type="str" value="/gpu/ObjectServicesNodelet/lookup_objects" />
     <param name="set_frame_rate_service" type="str" value="/gpu/Republisher/set_frame_rates" />
     <param name="yolo_debug" type="bool" value="true" />

@@ -3,6 +3,8 @@
 #include "spatial_visual_system/svs_nodelet.h"
 #include "spatial_visual_system/scene_manager.h"
 
+#include <memory>
+
 PLUGINLIB_EXPORT_CLASS(svs::SvsNodelet, nodelet::Nodelet)
 
 namespace svs {
@@ -10,11 +12,9 @@ void SvsNodelet::onInit() {
     NODELET_INFO("Beep boop... starting up spatial_visual_system");
 
     auto& nh = getPrivateNodeHandle();
-    svs::SceneManager scene_manager{nh};
+    scene_manager_ = std::make_unique<svs::SceneManager>(nh);
 
-    ROS_INFO("Ticking scene_manager. No explicit spins!");
-    ros::spin();
+    ROS_INFO("Finished setting up Spatial Visual System");
 
-    ROS_INFO("spatial_visual_system shutting down!");
 }
 }

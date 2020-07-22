@@ -89,7 +89,8 @@ void YoloGenerator::run(Scene& scene) {
         std::vector<int> cloud_indexs{};
         svs::extractCloudFromBbox(scene.getPercept().cloud_, img_cols, boundry, cloud_indexs);
         new_sofa->cloud_index_mask_ = cloud_indexs;
-            
+
+        new_sofa->detection_ = o;
 
         // Find class
         diagnostic_msgs::KeyValue class_key_val = *std::find_if(o.details.tags.begin(), o.details.tags.end(), 
@@ -119,7 +120,6 @@ void YoloGenerator::run(Scene& scene) {
 
         // Write out image bounding box (opencv style point at top left + width & height)
         new_sofa->bbox_ = boundry;
-        
         
         if (debug_) {
             ROS_INFO_STREAM("YoloGenerator made new sofa: " << new_sofa->annotations_);

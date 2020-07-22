@@ -13,9 +13,10 @@
 #include <pcl/point_types.h>
 #include <pcl_ros/point_cloud.h>
 #include <pcl/features/normal_3d.h>
-#include<pcl/features/normal_3d_omp.h>
+#include <pcl/features/normal_3d_omp.h>
 
 #include <tmc_darknet_msgs/Detections.h>
+#include <unsw_vision_msgs/Detection.h>
 
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/Image.h>
@@ -64,6 +65,7 @@ struct Percept {
   cv_bridge::CvImageConstPtr rgb_;
   PointCloud::ConstPtr cloud_;
   NormalCloud::ConstPtr cloud_normals_;
+  
 
 };
 
@@ -100,6 +102,7 @@ public:
   //std::vector<SofAAnnotation*> annotations_;
   nlohmann::json annotations_;
   Percept percept_;
+  unsw_vision_msgs::Detection detection_;
   std::vector<int> cloud_index_mask_;
   boost::optional<cv::Rect> bbox_;
 

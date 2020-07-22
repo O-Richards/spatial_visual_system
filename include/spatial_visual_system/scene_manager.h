@@ -38,6 +38,7 @@ private:
   svs::PlaneAnnotator plane_annotator_;
   svs::ShapeAnnotator shape_annotator_;
   svs::Size3DAnnotator size_annotator_;
+  svs::SiftRecognitionAnnotator sift_annotator_;
 
   svs::SceneWriter scene_writer_;
 

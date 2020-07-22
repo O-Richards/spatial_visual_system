@@ -19,6 +19,16 @@ public:
   virtual void run(const Scene& scene, std::vector<SofA>& sofa) = 0;
 };
 
+class SiftRecognitionAnnotator : public SofAAnnotator {
+public:
+  SiftRecognitionAnnotator(ros::NodeHandle& nh);
+  virtual ~SiftRecognitionAnnotator() = default;
+  virtual void run(const Scene& scene, std::vector<SofA>& sofa);
+private:
+  ros::ServiceClient recognition_client_;
+  const std::string recognition_topic_ = "recognise_object";
+};
+
 class ColourAnnotator : public SofAAnnotator {
 public:
   virtual ~ColourAnnotator() = default;
