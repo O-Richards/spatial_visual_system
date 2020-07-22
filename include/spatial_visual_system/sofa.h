@@ -13,6 +13,7 @@
 #include <pcl/point_types.h>
 #include <pcl_ros/point_cloud.h>
 #include <pcl/features/normal_3d.h>
+#include<pcl/features/normal_3d_omp.h>
 
 #include <tmc_darknet_msgs/Detections.h>
 
@@ -41,25 +42,29 @@ struct Percept {
 
   Percept(cv_bridge::CvImagePtr rgb, pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud) :
       rgb_{rgb}, cloud_{cloud}, cloud_normals_{nullptr} {
-          if (cloud_ != nullptr) {
-              // Calculate cloud normal
-              pcl::NormalEstimation<Point, Normal> normal_calc{};
-              normal_calc.setInputCloud(cloud_);
-              // Create an empty kdtree representation, and pass it to the normal estimation object.
-              // Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
-              pcl::search::KdTree<Point>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ> ());
-              normal_calc.setSearchMethod(tree);
-              // Use all neighbors in a sphere of radius 3cm
-              normal_calc.setRadiusSearch (0.03);
-              auto cloud_norm = boost::make_shared<NormalCloud>();
-              normal_calc.compute(*cloud_norm);
-              cloud_normals_ = cloud_norm;
-          }
   };
+
+  void calculateCloudNormals() {
+      if (cloud_ != nullptr && cloud_normals_ == nullptr  && cloud_->size() > 0) {
+          // Calculate cloud normal
+          pcl::NormalEstimationOMP<Point, Normal> normal_calc{};
+          normal_calc.setInputCloud(cloud_);
+          // Create an empty kdtree representation, and pass it to the normal estimation object.
+          // Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
+          pcl::search::KdTree<Point>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ> ());
+          normal_calc.setSearchMethod(tree);
+          // Use all neighbors in a sphere of radius 3cm
+          normal_calc.setRadiusSearch (0.03);
+          auto cloud_norm = boost::make_shared<NormalCloud>();
+          normal_calc.compute(*cloud_norm);
+          cloud_normals_ = cloud_norm;
+      }
+  }
 
   cv_bridge::CvImageConstPtr rgb_;
   PointCloud::ConstPtr cloud_;
   NormalCloud::ConstPtr cloud_normals_;
+
 };
 
 class SofA {

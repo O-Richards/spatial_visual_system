@@ -19,8 +19,11 @@ SceneManager::SceneManager(ros::NodeHandle& nh):
     sub_cloud_ = 
         std::make_unique<message_filters::Subscriber<sensor_msgs::PointCloud2>>(nh, "points", queue_size_);
 
-    sub_sync_ = std::make_unique<message_filters::Synchronizer<SyncPolicy>>(SyncPolicy(queue_size_), *sub_image_colour_, *sub_cloud_);
-    sub_sync_->registerCallback(boost::bind(&SceneManager::sync_cb, this, _1, _2));
+    sub_detections_ = 
+        std::make_unique<message_filters::Subscriber<unsw_vision_msgs::DetectionList>>(nh, "processed_yolo_detections", queue_size_);
+
+    sub_sync_ = std::make_unique<message_filters::Synchronizer<SyncPolicy>>(SyncPolicy(queue_size_), *sub_image_colour_, *sub_cloud_, *sub_detections_);
+    sub_sync_->registerCallback(boost::bind(&SceneManager::sync_cb, this, _1, _2, _3));
 
     // setup timer
     tick_timer_ = nh_.createTimer(ros::Duration(1/svs_freq_), boost::bind(&SceneManager::tick, this, _1));
@@ -29,7 +32,8 @@ SceneManager::SceneManager(ros::NodeHandle& nh):
 void SceneManager::tick(const ros::TimerEvent& event) {
     /* Crit section data_mutex_ begin */
     std::unique_lock<std::mutex> lock{data_mutex_};
-    if (last_cloud_ == nullptr || last_image_colour_ == nullptr) return;
+    if (last_cloud_ == nullptr || last_image_colour_ == nullptr || last_detections_ == nullptr) return;
+    if (last_cloud_->height * last_cloud_->width <= 0 || last_image_colour_->data.size() <= 0) return;
 
     /* Create local copy of data */
     cv_bridge::CvImagePtr image_cv;
@@ -43,6 +47,8 @@ void SceneManager::tick(const ros::TimerEvent& event) {
 
     pcl::fromROSMsg (*last_cloud_, *pcl_cloud);
     Percept curr_percept{image_cv, pcl_cloud};
+    curr_percept.calculateCloudNormals(); // This is absolutely killing the CPU
+    unsw_vision_msgs::DetectionList curr_detections = *last_detections_;
 
     lock.unlock();
     /* Crit section data_mutex_ end */
@@ -52,6 +58,7 @@ void SceneManager::tick(const ros::TimerEvent& event) {
         std::lock_guard<std::mutex> scene_lock{scene_.lock_};
         scene_.reset();
         scene_.setPercept(curr_percept);
+        scene_.setDetections(curr_detections);
     }
     yolo_generator_.run(scene_); 
 

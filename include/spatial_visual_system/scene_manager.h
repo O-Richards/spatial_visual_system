@@ -20,7 +20,7 @@
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/PointCloud2.h>
 
-#include <tmc_darknet_msgs/Detections.h>
+#include <unsw_vision_msgs/DetectionList.h>
 
 #include <memory>
 
@@ -28,7 +28,7 @@ namespace svs {
 
 class SceneManager {
 private:
-  using SyncPolicy = message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::PointCloud2>;
+  using SyncPolicy = message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::PointCloud2, unsw_vision_msgs::DetectionList>;
   const int queue_size_ = 10; 
 
   ros::NodeHandle& nh_;
@@ -48,22 +48,26 @@ private:
   // For subscribing to sensor data
   std::unique_ptr<image_transport::SubscriberFilter> sub_image_colour_;
   std::unique_ptr<message_filters::Subscriber<sensor_msgs::PointCloud2>> sub_cloud_;
+  std::unique_ptr<message_filters::Subscriber<unsw_vision_msgs::DetectionList>> sub_detections_;
 
   std::unique_ptr<message_filters::Synchronizer<SyncPolicy>> sub_sync_;
 
   // last sensor data frame
   sensor_msgs::Image::ConstPtr last_image_colour_ = nullptr;
   sensor_msgs::PointCloud2::ConstPtr last_cloud_ = nullptr;
+  unsw_vision_msgs::DetectionList::ConstPtr last_detections_ = nullptr;
 
   std::mutex data_mutex_;
 
 public:
   SceneManager(ros::NodeHandle& nh);
 
-  void sync_cb(const sensor_msgs::Image::ConstPtr image_colour, const sensor_msgs::PointCloud2ConstPtr cloud) {
+  void sync_cb(const sensor_msgs::Image::ConstPtr image_colour, const sensor_msgs::PointCloud2ConstPtr cloud, 
+          const unsw_vision_msgs::DetectionListConstPtr detections) {
       std::lock_guard<std::mutex> lock{data_mutex_};
       last_image_colour_ = image_colour;
       last_cloud_ = cloud;
+      last_detections_ = detections;
   }
 
   void tick(const ros::TimerEvent& event);

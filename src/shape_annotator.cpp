@@ -35,6 +35,14 @@ void ShapeAnnotator::run(const Scene& scene, std::vector<SofA>& sofa_list) {
         
         NormalCloud::Ptr sofa_normals = boost::make_shared<NormalCloud>();
         auto scene_normals = scene.getPercept().cloud_normals_;
+        if (scene_normals->size() != scene_cloud->size()) {
+            std::ostringstream msg{};
+            msg << "Scene cloud size (" << scene_cloud->height << ", " << scene_cloud->width <<
+                ") Not equal to normal cloud size (" << scene_normals->height << ", " <<
+                scene_normals->width << ")";
+            throw std::runtime_error(msg.str());
+        }
+
         for (const auto i : sofa.cloud_index_mask_) {
             sofa_normals->push_back(scene_normals->at(i));
         }

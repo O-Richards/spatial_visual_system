@@ -43,6 +43,7 @@ void YoloGenerator::read_params() {
 
 void YoloGenerator::run(Scene& scene) {
     // Call the Yolo service
+    /*
     unsw_vision_msgs::lookup lookup;
     lookup.request.data_provided = true;
     sensor_msgs::PointCloud2 cloud_msg;
@@ -57,8 +58,9 @@ void YoloGenerator::run(Scene& scene) {
         ROS_ERROR("Failed calling lookup object on topic %s", yolo_service_name_.c_str());
         return;
     }
+    */
 
-    std::vector<unsw_vision_msgs::Detection> lookup_detections = lookup.response.list;
+    std::vector<unsw_vision_msgs::Detection> lookup_detections = scene.copyDetectionsWLock().list;
     // Process the detections
 
     for (unsw_vision_msgs::Detection o : lookup_detections) {

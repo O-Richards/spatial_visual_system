@@ -7,6 +7,8 @@
 #include "spatial_visual_system/sofa.h"
 #include "spatial_visual_system/scene_writer.h"
 
+#include <unsw_vision_msgs/DetectionList.h>
+
 namespace svs {
 class Scene {
 public:
@@ -23,9 +25,20 @@ public:
 
   std::mutex lock_;
 
+  void setDetections(const unsw_vision_msgs::DetectionList& detections) {
+      detections_ = detections;
+  }
+
+  unsw_vision_msgs::DetectionList copyDetectionsWLock() {
+      std::lock_guard<std::mutex> lock{lock_};
+
+      return detections_;
+  }
+
 private:
   std::vector<SofA> sofa_;
   Percept percept_;
+  unsw_vision_msgs::DetectionList detections_;
 };
 } // namespace svs
 
