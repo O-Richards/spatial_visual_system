@@ -3,6 +3,8 @@
 #include <world_model_store_msgs/Insert.h>
 #include <world_model_store_msgs/Details.h>
 
+#include <spatial_visual_system/Detection.h>
+
 #include <ros/ros.h>
 
 namespace svs {
@@ -38,6 +40,12 @@ void SceneWriter::write(SofA &sofa) {
                 " service response: " << resp <<
                 " Request: " << req);
     }
+
+    // Publish the SofA to a topic
+    spatial_visual_system::Detection detection_msg;
+    detection_msg.json = object_json.dump();
+    detection_msg.sofa_id = sofa.getId();
+    detection_pub_.publish(detection_msg);
 }
 
 void SceneWriter::new_scene() {

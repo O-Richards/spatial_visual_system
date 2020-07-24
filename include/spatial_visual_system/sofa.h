@@ -41,6 +41,7 @@ struct Percept {
 
   Percept(cv_bridge::CvImagePtr rgb, pcl::PointCloud<pcl::PointXYZ>::ConstPtr cloud) :
       rgb_{rgb}, cloud_{cloud}, cloud_normals_{nullptr} {
+          /*
           if (cloud_ != nullptr) {
               // Calculate cloud normal
               pcl::NormalEstimation<Point, Normal> normal_calc{};
@@ -55,6 +56,7 @@ struct Percept {
               normal_calc.compute(*cloud_norm);
               cloud_normals_ = cloud_norm;
           }
+          */
   };
 
   cv_bridge::CvImageConstPtr rgb_;

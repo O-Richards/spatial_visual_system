@@ -56,9 +56,9 @@ void SceneManager::tick(const ros::TimerEvent& event) {
     yolo_generator_.run(scene_); 
 
     //plane_annotator_.run(scene_, scene_.getSofA());
-    size_annotator_.run(scene_, scene_.getSofA());
+    //size_annotator_.run(scene_, scene_.getSofA());
     colour_annotator_.run(scene_, scene_.getSofA());
-    shape_annotator_.run(scene_, scene_.getSofA());
+    //shape_annotator_.run(scene_, scene_.getSofA());
 
     scene_.accept(scene_writer_);
 
