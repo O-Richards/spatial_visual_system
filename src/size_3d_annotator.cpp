@@ -15,7 +15,7 @@
 
 namespace svs {
 
-#define DEBUG 1
+#define DEBUG 0
 
 void Size3DAnnotator::run(const Scene& scene, std::vector<SofA>& sofa) {
     auto scene_cloud = scene.getPercept().cloud_;
@@ -49,7 +49,7 @@ void Size3DAnnotator::run(const Scene& scene, std::vector<SofA>& sofa) {
         // We are in the camera link (assert this)
         // So the 2D area is (maxx - minx)*(maxy-miny)
         if (cloud_filtered->header.frame_id != camera_link_frame_) {
-            ROS_WARN_STREAM(__PRETTY_FUNCTION__ << " Point cloud in frame " << cloud_filtered->header.frame_id <<
+            ROS_WARN_STREAM(__PRETTY_FUNCTION__ << " Point cloud in frame " << scene_cloud->header.frame_id <<
                     " not in expected frame " << camera_link_frame_);
         }
         auto area = (max.x - min.x)*(max.y-min.y);

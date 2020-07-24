@@ -19,6 +19,7 @@ public:
       percept_ = percept;
   }
   const Percept& getPercept() const {return percept_;};
+  Percept& getPercept() {return percept_;};
 
   const std::vector<SofA>& getSofA() const {return sofa_;};
   std::vector<SofA>& getSofA() {return sofa_;};

@@ -42,8 +42,8 @@ private:
 
   svs::SceneWriter scene_writer_;
 
-  double svs_freq_ = 10;
-  ros::Timer tick_timer_;
+  double svs_freq_ = 40;
+  //ros::Timer tick_timer_;
 
 
   // For subscribing to sensor data
@@ -65,12 +65,16 @@ public:
 
   void sync_cb(const sensor_msgs::Image::ConstPtr image_colour, const sensor_msgs::PointCloud2ConstPtr cloud, 
           const unsw_vision_msgs::DetectionListConstPtr detections) {
-      std::lock_guard<std::mutex> lock{data_mutex_};
-      last_image_colour_ = image_colour;
-      last_cloud_ = cloud;
-      last_detections_ = detections;
+      {
+          std::lock_guard<std::mutex> lock{data_mutex_};
+          last_image_colour_ = image_colour;
+          last_cloud_ = cloud;
+          last_detections_ = detections;
+      }
+      tick();
   }
 
+  void tick();
   void tick(const ros::TimerEvent& event);
 };
 

@@ -73,7 +73,6 @@ void YoloGenerator::run(Scene& scene) {
         // Lock the new sofa
         std::lock_guard<std::mutex> sofa_lock(new_sofa->lock_);
 
-        ROS_INFO_STREAM("bbox:" << o.details.bbox);
         // Add in the Percept
         cv_bridge::CvImage img{};
         img.header = scene.getPercept().rgb_->header;
