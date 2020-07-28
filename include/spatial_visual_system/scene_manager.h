@@ -60,6 +60,10 @@ private:
 
   std::mutex data_mutex_;
 
+  std::string scene_save_dir_ = "/home/oli/svs_dump";
+
+  static unsigned int scene_no_;
+
 public:
   SceneManager(ros::NodeHandle& nh);
 
@@ -76,6 +80,7 @@ public:
 
   void tick();
   void tick(const ros::TimerEvent& event);
+  void saveScene(const std::string& dir);
 };
 
 

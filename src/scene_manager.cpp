@@ -6,10 +6,13 @@
 #include <sensor_msgs/PointCloud2.h>
 
 #include <chrono>
+#include <boost/filesystem.hpp>
 
 namespace svs {
 
 #define DEBUG true
+
+unsigned int SceneManager::scene_no_ = 0;
 
 SceneManager::SceneManager(ros::NodeHandle& nh):
     nh_{nh}, yolo_generator_{nh_}, plane_annotator_{nh_}, shape_annotator_{nh_}, size_annotator_{nh_}, sift_annotator_{nh_}, scene_writer_{nh_}
@@ -107,8 +110,21 @@ void SceneManager::tick() {
             << "\t colour time: " << std::chrono::duration_cast<std::chrono::milliseconds>(colour_end - colour_begin).count() << "ms\n"
             << "\t shape time: " << std::chrono::duration_cast<std::chrono::milliseconds>(shape_end - shape_begin).count() << "ms\n"
             << "\t writing scene: " << std::chrono::duration_cast<std::chrono::milliseconds>(write_end - write_begin).count() << "ms\n");
+
+    // save out scene
+    std::stringstream scene_dir;
+    scene_dir << scene_save_dir_ << "/scene_" << scene_no_;
+    try {
+        boost::filesystem::create_directory(scene_dir.str());
+        scene_.save(scene_dir.str());
+    } catch (std::exception e) {
+        ROS_WARN_STREAM(__PRETTY_FUNCTION__ << " failed to save scene " << e.what());
+    }
 #endif
 
+    scene_no_++;
 }
+
+
 
 } // namespace svs

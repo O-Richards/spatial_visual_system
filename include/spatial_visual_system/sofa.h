@@ -65,6 +65,7 @@ struct Percept {
   cv_bridge::CvImageConstPtr rgb_;
   PointCloud::ConstPtr cloud_;
   NormalCloud::ConstPtr cloud_normals_;
+
   
 
 };
@@ -98,6 +99,7 @@ public:
     return id_;
   }
 
+
   std::mutex lock_;
   //std::vector<SofAAnnotation*> annotations_;
   nlohmann::json annotations_;
@@ -105,6 +107,8 @@ public:
   unsw_vision_msgs::Detection detection_;
   std::vector<int> cloud_index_mask_;
   boost::optional<cv::Rect> bbox_;
+
+
 
 private:
   static unsigned int next_sofa_no_;

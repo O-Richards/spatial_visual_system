@@ -36,6 +36,9 @@ public:
       return detections_;
   }
 
+  void saveSofA(SofA& sofa, const std::string& dir);
+  void save(const std::string& dir);
+
 private:
   std::vector<SofA> sofa_;
   Percept percept_;
