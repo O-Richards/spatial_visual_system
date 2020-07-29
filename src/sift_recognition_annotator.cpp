@@ -17,7 +17,7 @@ void SiftRecognitionAnnotator::run(const Scene& scene, std::vector<SofA>& sofa) 
         // Setup service call
         unsw_vision_msgs::RecogniseObjects recognise{};
         unsw_vision_msgs::Detection detection = object.detection_;
-        detection.image = *scene.getPercept().rgb_->toImageMsg();
+        detection.image = *object.percept_.rgb_->toImageMsg();
         recognise.request.list.push_back(detection);
 #if DEBUG
         ROS_INFO_STREAM(__PRETTY_FUNCTION__ << " Calling recognition_client");
