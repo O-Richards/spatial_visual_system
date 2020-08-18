@@ -7,12 +7,14 @@
 #include <pcl_ros/point_cloud.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/filters/statistical_outlier_removal.h>
 
 #include <pcl_ros/transforms.h>
 
 namespace svs {
 
 #define DEBUG 1
+
 static const float GROUND_FILTER_MIN_HEIGHT = 0.05; // 5cm
 
 PlaneAnnotator::PlaneAnnotator(ros::NodeHandle& nh) :
@@ -27,7 +29,6 @@ void PlaneAnnotator::run(const Scene& scene, std::vector<SofA>& sofa_list) {
     // Then we find the largest plane in the scene and remove this
     // Extract out the dominant plane
     
-    auto ground_removed = boost::make_shared<PointCloud>();
     auto scene_cloud = scene.getPercept().cloud_;
     // Check frame is what we expect
     if (scene_cloud->header.frame_id != working_frame_) {
@@ -51,7 +52,21 @@ void PlaneAnnotator::run(const Scene& scene, std::vector<SofA>& sofa_list) {
     ROS_INFO_STREAM(__FUNCTION__ << " fitting plane to cloud in frame " << scene_cloud->header.frame_id);
 #endif
 
+    auto ground_removed = boost::make_shared<PointCloud>();
+    //*ground_removed = *scene_cloud;
     removeGround(scene_cloud, ground_removed);
+
+    auto filtered_cloud = boost::make_shared<PointCloud>();
+    filtered_cloud = ground_removed;
+    /*
+    pcl::StatisticalOutlierRemoval<Point> stat_outlier_remover;
+    // number (k) neighbors that we will compare the selected point against
+    stat_outlier_remover.setMeanK(50);
+    // number (k) neighbors that we will compare the selected point against
+    stat_outlier_remover.setStddevMulThresh(1.0);
+    stat_outlier_remover.setInputCloud(ground_removed);
+    stat_outlier_remover.filter(*filtered_cloud);
+    */
 
     // Find plane in cloud
     /*auto ransac_model = 
@@ -93,7 +108,7 @@ void PlaneAnnotator::run(const Scene& scene, std::vector<SofA>& sofa_list) {
     // actually, 10mm may not be aggressive enough.. trying 15mm
     seg.setDistanceThreshold (0.005);
 
-    seg.setInputCloud(ground_removed);
+    seg.setInputCloud(filtered_cloud);
     seg.segment (*inliers, *coefficients);
 
 #if DEBUG
@@ -101,11 +116,14 @@ void PlaneAnnotator::run(const Scene& scene, std::vector<SofA>& sofa_list) {
 
     // Create cloud to publish inliers
     auto cloud_pub = boost::make_shared<PointCloud>();
-    pcl::copyPointCloud(*scene_cloud, inliers->indices, *cloud_pub);
+    pcl::copyPointCloud(*filtered_cloud, inliers->indices, *cloud_pub);
     plane_pub_.publish(cloud_pub);
+    
 #endif
 
     // Remove plane from SofA
+    // Note that we carefully kept the input point cloud in the same dimensions etc.
+    // So we can just directly use the indicies
     for (auto& sofa : sofa_list) {
         std::lock_guard<decltype(sofa.lock_)> lock{sofa.lock_};
         std::vector<int> diff{};
@@ -121,11 +139,41 @@ void PlaneAnnotator::run(const Scene& scene, std::vector<SofA>& sofa_list) {
 
 void PlaneAnnotator::removeGround(PointCloud::ConstPtr in_cloud, 
         PointCloud::Ptr out_cloud) {
+
+    *out_cloud = *in_cloud;
+    // Replace positions of floor with NaN's
+    int num_removed = 0;
+    const float bad_point = std::numeric_limits<float>::quiet_NaN();
+    for (auto& p : *out_cloud) {
+        if (p.z < GROUND_FILTER_MIN_HEIGHT) {
+            p.x = bad_point;
+            p.y = bad_point;
+            p.z = bad_point;
+
+            num_removed++;
+        }
+    }
+
+#if DEBUG
+    /*
+    auto point_is_nan = [](const auto& p) {
+        const float bad_point = std::numeric_limits<float>::quiet_NaN();
+        return p.x == bad_point && p.y == bad_point && p.z == bad_point;
+    };
+
+    int num_nan_orig = std::count_if(in_cloud->begin(), in_cloud->end(), point_is_nan);
+    int num_nan = std::count_if(out_cloud->begin(), out_cloud->end(), point_is_nan);
+    */
+    ROS_INFO_STREAM("Removed " << num_removed << " ground points");
+#endif
+
+    /*
     pcl::PassThrough<pcl::PointXYZ> pass;
     pass.setInputCloud(in_cloud);
     pass.setFilterFieldName("z");
     pass.setFilterLimits(GROUND_FILTER_MIN_HEIGHT, FLT_MAX); // remove 5cm from ground
     pass.filter(*out_cloud);
+    */
 }
 
 
