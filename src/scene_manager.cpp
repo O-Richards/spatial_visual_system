@@ -84,7 +84,7 @@ void SceneManager::tick() {
     auto sift_begin = now();
     sift_annotator_.run(scene_, scene_.getSofA());
     auto sift_end = now();
-    //plane_annotator_.run(scene_, scene_.getSofA());
+    plane_annotator_.run(scene_, scene_.getSofA());
     auto size_begin = now();
     size_annotator_.run(scene_, scene_.getSofA());
     auto size_end = now();
