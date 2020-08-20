@@ -7,7 +7,8 @@
 namespace svs {
 
 static const int NUM_MEANS{3};
-static const bool DEBUG{false};
+
+#define DEBUG true
 
 // Find dominant label
 // Assumes there are 2 labels
@@ -38,7 +39,7 @@ cv::Vec3f center_label_value(const cv::Mat& labels, const cv::Mat& colour_center
     auto bottom_right = top_left + roi_size;
 
 #if DEBUG
-    ROS_INFO_STREAM("top left " << top_left << " bottom_right: " << bottom_right << " img_size: " << img_size);
+    //ROS_INFO_STREAM("top left " << top_left << " bottom_right: " << bottom_right << " img_size: " << img_size);
 #endif
 
     cv::Range range[2] = {{top_left.height, bottom_right.height}, {top_left.width, bottom_right.width}};
@@ -55,6 +56,12 @@ cv::Vec3f center_label_value(const cv::Mat& labels, const cv::Mat& colour_center
     assert(0 <= max_label && max_label < NUM_MEANS);
 
     return colour_centers.at<cv::Vec3f>(max_label);
+}
+
+std::string colourToStr(cv::Vec3f bgr_colour) {
+    std::ostringstream colour_rgb_string;
+    colour_rgb_string << bgr_colour[2] * 255 << ", " << bgr_colour[1] * 255 << ", " << bgr_colour[0] * 255;
+    return colour_rgb_string.str();
 }
 
 void ColourAnnotator::run(const Scene& scene, std::vector<SofA>& sofa_list) {
@@ -74,25 +81,19 @@ void ColourAnnotator::run(const Scene& scene, std::vector<SofA>& sofa_list) {
         auto criteria = cv::TermCriteria{CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 10, 1.0};
         cv::kmeans(img, NUM_MEANS, best_labels, criteria, 3, cv::KMEANS_PP_CENTERS, colour_centers);
 
-#if DEBUG
-        ROS_INFO_STREAM("Img dimensions" << img.size());
-        ROS_INFO_STREAM("best_labels dimensions" << best_labels.size());
-        ROS_INFO_STREAM("colour_centers dimensions" << colour_centers.size());
-        ROS_INFO_STREAM("Detected colours (bgr)" << colour_centers * 255);
-#endif
-
         auto dominant_colour = center_label_value(best_labels, colour_centers, img_size);
 
-        std::ostringstream colour_rgb_string;
         // Colour is in BGR in range 0-> 1 We want RGB in range 0->255
-        colour_rgb_string << dominant_colour[2] * 255 << ", " << dominant_colour[1] * 255 << ", " << dominant_colour[0] * 255;
         //assert(sofa.percept_.rgb_->encoding == cv_bridge::CV_8UC3);
-        sofa.annotations_["colour_rgb_low"] = colour_rgb_string.str();
+        auto colour_rgb_str = colourToStr(dominant_colour);
+        sofa.annotations_["colour_rgb_low"] = colour_rgb_str;
+        //sofa.annotations_["colours_bgr"] = colour_centers * 255
 
 #if DEBUG
-        ROS_INFO_STREAM("detected colour: " << colour_rgb_string.str());
-        cv::imshow("sofa", sofa.percept_.rgb_->image);
-        cv::waitKey(1);
+        ROS_INFO_STREAM("Detected colours sofa " << sofa.getId() << " (bgr)" << colour_centers * 255);
+        ROS_INFO_STREAM("detected colour (rgb): " << colour_rgb_str);
+        //cv::imshow("sofa", sofa.percept_.rgb_->image);
+        //cv::waitKey(1);
 #endif
     }
 }
