@@ -7,8 +7,7 @@
 namespace svs {
 
 static const int NUM_MEANS{3};
-
-#define DEBUG true
+static const bool DEBUG{true};
 
 // Find dominant label
 // Assumes there are 2 labels
@@ -39,7 +38,7 @@ cv::Vec3f center_label_value(const cv::Mat& labels, const cv::Mat& colour_center
     auto bottom_right = top_left + roi_size;
 
 #if DEBUG
-    //ROS_INFO_STREAM("top left " << top_left << " bottom_right: " << bottom_right << " img_size: " << img_size);
+    ROS_INFO_STREAM("top left " << top_left << " bottom_right: " << bottom_right << " img_size: " << img_size);
 #endif
 
     cv::Range range[2] = {{top_left.height, bottom_right.height}, {top_left.width, bottom_right.width}};
@@ -58,10 +57,46 @@ cv::Vec3f center_label_value(const cv::Mat& labels, const cv::Mat& colour_center
     return colour_centers.at<cv::Vec3f>(max_label);
 }
 
-std::string colourToStr(cv::Vec3f bgr_colour) {
-    std::ostringstream colour_rgb_string;
-    colour_rgb_string << bgr_colour[2] * 255 << ", " << bgr_colour[1] * 255 << ", " << bgr_colour[0] * 255;
-    return colour_rgb_string.str();
+void add_histogram_annotation(SofA& sofa) {
+    // Assume we already hold the sofa lock!
+    auto img = sofa.percept_.rgb_->image; // assume image is 0->255 bgr
+    auto img_hsv = cv::Mat{};
+    cv::cvtColor(img, img_hsv, cv::COLOR_BGR2HSV);
+
+    /*
+    auto mask = cv::Mat{};
+    auto histogram = cv::Mat{};
+    auto hist_size = std::vector<int>{64};
+    auto hist_ranges = std::vector<float>{0, 255};
+    auto channels = std::vector<int>{0};
+    cv::calcHist({img_hsv}, channels, mask, histogram, hist_size, hist_ranges);
+    */
+
+    // Quantize the hue to 30 levels
+    // and the saturation to 32 levels
+    int hbins = 30;
+    int histSize[] = {hbins};
+    // hue varies from 0 to 179, see cvtColor
+    float hranges[] = { 0, 180 };
+    // saturation varies from 0 (black-gray-white) to
+    // 255 (pure spectrum color)
+    const float* ranges[] = {hranges};
+    cv::MatND histogram;
+    // we compute the histogram from the 0-th and 1-st channels
+    int channels[] = {0};
+    calcHist(&img_hsv, 1, channels, cv::Mat(), // do not use mask
+             histogram, 1, histSize, ranges,
+             true, // the histogram is uniform
+             false );
+#if DEBUG
+    ROS_INFO_STREAM("histogram size: " << histogram.size());
+#endif
+
+    // normalise histogram to proportion of pixels
+    cv::normalize(histogram, histogram, 0, 1, cv::NORM_MINMAX, -1, cv::Mat());
+    auto histogram_vec = std::vector<float>{};
+    histogram.copyTo(histogram_vec);
+    sofa.annotations_["colour_histogram_h"] = histogram_vec;
 }
 
 void ColourAnnotator::run(const Scene& scene, std::vector<SofA>& sofa_list) {
@@ -69,32 +104,40 @@ void ColourAnnotator::run(const Scene& scene, std::vector<SofA>& sofa_list) {
     for (auto& sofa : sofa_list) {
         std::lock_guard<decltype(sofa.lock_)> lock{sofa.lock_};
 
-        cv::Mat img;
-        sofa.percept_.rgb_->image.convertTo(img, CV_32F, 1.0/255); // Normalise to 0 -> 1 range
-        auto img_size = img.size();
-        img = img.reshape(0, img.rows * img.cols); // Flatten into 1 row per pixel
+        cv::Mat kmeans_img;
+        sofa.percept_.rgb_->image.convertTo(kmeans_img, CV_32F, 1.0/255); // Normalise to 0 -> 1 range
+        auto img_size = kmeans_img.size();
+        kmeans_img = kmeans_img.reshape(0, kmeans_img.rows * kmeans_img.cols); // Flatten into 1 row per pixel
 
         // Apply K means clustering to find the object colour with 2 clusters
         // (1 for image, 1 for BG)
         cv::Mat best_labels;
         cv::Mat colour_centers;
         auto criteria = cv::TermCriteria{CV_TERMCRIT_ITER | CV_TERMCRIT_EPS, 10, 1.0};
-        cv::kmeans(img, NUM_MEANS, best_labels, criteria, 3, cv::KMEANS_PP_CENTERS, colour_centers);
+        cv::kmeans(kmeans_img, NUM_MEANS, best_labels, criteria, 3, cv::KMEANS_PP_CENTERS, colour_centers);
+
+#if DEBUG
+        ROS_INFO_STREAM("Img dimensions" << kmeans_img.size());
+        ROS_INFO_STREAM("best_labels dimensions" << best_labels.size());
+        ROS_INFO_STREAM("colour_centers dimensions" << colour_centers.size());
+        ROS_INFO_STREAM("Detected colours (bgr)" << colour_centers * 255);
+#endif
 
         auto dominant_colour = center_label_value(best_labels, colour_centers, img_size);
 
+        std::ostringstream colour_rgb_string;
         // Colour is in BGR in range 0-> 1 We want RGB in range 0->255
+        colour_rgb_string << dominant_colour[2] * 255 << ", " << dominant_colour[1] * 255 << ", " << dominant_colour[0] * 255;
         //assert(sofa.percept_.rgb_->encoding == cv_bridge::CV_8UC3);
-        auto colour_rgb_str = colourToStr(dominant_colour);
-        sofa.annotations_["colour_rgb_low"] = colour_rgb_str;
-        //sofa.annotations_["colours_bgr"] = colour_centers * 255
+        sofa.annotations_["colour_rgb_low"] = colour_rgb_string.str();
 
 #if DEBUG
-        ROS_INFO_STREAM("Detected colours sofa " << sofa.getId() << " (bgr)" << colour_centers * 255);
-        ROS_INFO_STREAM("detected colour (rgb): " << colour_rgb_str);
-        //cv::imshow("sofa", sofa.percept_.rgb_->image);
-        //cv::waitKey(1);
+        ROS_INFO_STREAM("detected colour: " << colour_rgb_string.str());
+        cv::imshow("sofa", sofa.percept_.rgb_->image);
+        cv::waitKey(1);
 #endif
+        // Compute colour histogram
+        add_histogram_annotation(sofa);
     }
 }
 
