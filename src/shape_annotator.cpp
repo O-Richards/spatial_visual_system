@@ -8,6 +8,8 @@
 #include <pcl_ros/point_cloud.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/features/normal_3d_omp.h>
 
 #include <sstream>
 
@@ -16,6 +18,9 @@ namespace svs {
 #define DEBUG 1
 
 static const double CYLINDER_INLIERS_PROPORTION_THRESH = 0.5;
+
+// Static helpers
+void calculateCloudNormals(PointCloud::ConstPtr cloud_in, NormalCloud& normals);
 
 ShapeAnnotator::ShapeAnnotator(ros::NodeHandle& nh) {
     
@@ -34,6 +39,8 @@ void ShapeAnnotator::run(const Scene& scene, std::vector<SofA>& sofa_list) {
         }
         
         NormalCloud::Ptr sofa_normals = boost::make_shared<NormalCloud>();
+        /*
+        // Previously the normal cloud for the whole scene was calculated and cached but this proved to be very slow (around 4s)
         auto scene_normals = scene.getPercept().cloud_normals_;
         if (scene_normals->size() != scene_cloud->size()) {
             std::ostringstream msg{};
@@ -46,7 +53,9 @@ void ShapeAnnotator::run(const Scene& scene, std::vector<SofA>& sofa_list) {
         for (const auto i : sofa.cloud_index_mask_) {
             sofa_normals->push_back(scene_normals->at(i));
         }
+        */
 
+        calculateCloudNormals(sofa_cloud, *sofa_normals);
 
         // Apply RanSAC to try fit a cylinder
         auto coeffs_cylinder = boost::make_shared<pcl::ModelCoefficients>();
@@ -115,5 +124,17 @@ void ShapeAnnotator::run(const Scene& scene, std::vector<SofA>& sofa_list) {
     }
 }
 
+void calculateCloudNormals(PointCloud::ConstPtr cloud_in, NormalCloud& normals) {
+    // Calculate cloud normal
+    pcl::NormalEstimationOMP<Point, Normal> normal_calc{};
+    normal_calc.setInputCloud(cloud_in);
+    // Create an empty kdtree representation, and pass it to the normal estimation object.
+    // Its content will be filled inside the object, based on the given input dataset (as no other search surface is given).
+    pcl::search::KdTree<Point>::Ptr tree (new pcl::search::KdTree<Point> ());
+    normal_calc.setSearchMethod(tree);
+    // Use all neighbors in a sphere of radius 3cm
+    normal_calc.setRadiusSearch (0.03);
+    normal_calc.compute(normals);
+}
 
 } // namespace svs
