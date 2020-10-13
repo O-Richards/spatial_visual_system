@@ -11,6 +11,7 @@
 namespace svs {
 
 #define DEBUG true
+#define SAVE_SCENES false
 
 unsigned int SceneManager::scene_no_ = 0;
 
@@ -29,7 +30,7 @@ SceneManager::SceneManager(ros::NodeHandle& nh):
     sub_detections_ = 
         std::make_unique<message_filters::Subscriber<unsw_vision_msgs::DetectionList>>(nh, "processed_yolo_detections", queue_size_);
 
-    sub_sync_ = std::make_unique<message_filters::Synchronizer<SyncPolicy>>(SyncPolicy(queue_size_), *sub_image_colour_, *sub_cloud_, *sub_detections_);
+    sub_sync_ = std::make_unique<message_filters::Synchronizer<SyncPolicy>>(SyncPolicy(sync_queue_size_), *sub_image_colour_, *sub_cloud_, *sub_detections_);
     sub_sync_->registerCallback(boost::bind(&SceneManager::sync_cb, this, _1, _2, _3));
 
     // setup timer
@@ -84,7 +85,9 @@ void SceneManager::tick() {
     auto sift_begin = now();
     sift_annotator_.run(scene_, scene_.getSofA());
     auto sift_end = now();
-    plane_annotator_.run(scene_, scene_.getSofA());
+    auto plane_begin = now();
+    //plane_annotator_.run(scene_, scene_.getSofA());
+    auto plane_end = now();
     auto size_begin = now();
     size_annotator_.run(scene_, scene_.getSofA());
     auto size_end = now();
@@ -92,8 +95,8 @@ void SceneManager::tick() {
     colour_annotator_.run(scene_, scene_.getSofA());
     auto colour_end = now();
     auto shape_begin = now();
-    scene_.getPercept().calculateCloudNormals(); // This is absolutely killing the CPU
-    shape_annotator_.run(scene_, scene_.getSofA());
+    //scene_.getPercept().calculateCloudNormals(); // This is absolutely killing the CPU
+    //shape_annotator_.run(scene_, scene_.getSofA());
     auto shape_end = now();
 
     auto write_begin = now();
@@ -106,12 +109,14 @@ void SceneManager::tick() {
 #if DEBUG
     ROS_INFO_STREAM("SceneManager::tick() took " << elapsed_t.count() << "ms\n"
             << "\t sift time: " << std::chrono::duration_cast<std::chrono::milliseconds>(sift_end - sift_begin).count() << "ms\n"
+            << "\t plane time: " << std::chrono::duration_cast<std::chrono::milliseconds>(plane_end - plane_begin).count() << "ms\n"
             << "\t size time: " << std::chrono::duration_cast<std::chrono::milliseconds>(size_end - size_begin).count() << "ms\n"
             << "\t colour time: " << std::chrono::duration_cast<std::chrono::milliseconds>(colour_end - colour_begin).count() << "ms\n"
             << "\t shape time: " << std::chrono::duration_cast<std::chrono::milliseconds>(shape_end - shape_begin).count() << "ms\n"
             << "\t writing scene: " << std::chrono::duration_cast<std::chrono::milliseconds>(write_end - write_begin).count() << "ms\n");
+#endif
 
-    // save out scene
+#if SAVE_SCENES
     std::stringstream scene_dir;
     scene_dir << scene_save_dir_ << "/scene_" << scene_no_;
     try {

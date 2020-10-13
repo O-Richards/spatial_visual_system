@@ -29,7 +29,8 @@ namespace svs {
 class SceneManager {
 private:
   using SyncPolicy = message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::PointCloud2, unsw_vision_msgs::DetectionList>;
-  const int queue_size_ = 10; 
+  const int queue_size_ = 1; 
+  const int sync_queue_size_ = 10;
 
   ros::NodeHandle& nh_;
   svs::Scene scene_;
